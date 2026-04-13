@@ -7,6 +7,7 @@ import { DecodedOutput } from '@/components/DecodedOutput';
 import { ControlsPanel } from '@/components/ControlsPanel';
 import { MessageHistory } from '@/components/MessageHistory';
 import { MorseReference } from '@/components/MorseReference';
+import { TextToMorse } from '@/components/TextToMorse';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -52,6 +53,9 @@ const Index = () => {
           onInputModeChange={setInputMode}
           onReset={telegraph.reset}
         />
+
+        {/* Text to Morse encoder */}
+        <TextToMorse />
 
         {/* History & Reference */}
         <MessageHistory history={telegraph.history} />
