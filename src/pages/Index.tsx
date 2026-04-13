@@ -8,6 +8,7 @@ import { ControlsPanel } from '@/components/ControlsPanel';
 import { MessageHistory } from '@/components/MessageHistory';
 import { MorseReference } from '@/components/MorseReference';
 import { TextToMorse } from '@/components/TextToMorse';
+import { AudioDecoder } from '@/components/AudioDecoder';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -56,6 +57,9 @@ const Index = () => {
 
         {/* Text to Morse encoder */}
         <TextToMorse />
+
+        {/* Audio Morse decoder */}
+        <AudioDecoder />
 
         {/* History & Reference */}
         <MessageHistory history={telegraph.history} />
