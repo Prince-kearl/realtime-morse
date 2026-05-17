@@ -60,7 +60,7 @@ export function InputSourceDialog({ open, onSelect, onClose, initial }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="bg-telegraph-card border-telegraph-border text-telegraph-text max-w-lg">
+      <DialogContent className="bg-telegraph-surface/95 backdrop-blur-xl border-telegraph-border text-telegraph-text max-w-lg shadow-soft">
         <DialogHeader>
           <DialogTitle className="text-telegraph-text">Select your input source</DialogTitle>
           <DialogDescription className="text-telegraph-muted">
@@ -76,15 +76,19 @@ export function InputSourceDialog({ open, onSelect, onClose, initial }: Props) {
               <button
                 key={opt.id}
                 onClick={() => setSelected(opt.id)}
-                className={`w-full text-left rounded-md border p-3 flex items-start gap-3 transition-colors ${
+                className={`w-full text-left rounded-2xl border p-3.5 flex items-start gap-3 transition-all ${
                   active
-                    ? 'border-telegraph-accent bg-telegraph-accent/10'
-                    : 'border-telegraph-border bg-telegraph-bg hover:border-telegraph-accent/50'
+                    ? 'border-telegraph-accent bg-gradient-sent/15 shadow-bubble'
+                    : 'border-telegraph-border bg-telegraph-bg/50 hover:border-telegraph-accent/50'
                 }`}
               >
-                <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${active ? 'text-telegraph-accent' : 'text-telegraph-muted'}`} />
-                <div className="flex-1">
-                  <div className={`font-medium text-sm ${active ? 'text-telegraph-accent' : 'text-telegraph-text'}`}>{opt.label}</div>
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  active ? 'bg-gradient-sent text-white shadow-bubble' : 'bg-telegraph-surface text-telegraph-muted'
+                }`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 pt-0.5">
+                  <div className={`font-semibold text-sm ${active ? 'text-telegraph-text' : 'text-telegraph-text'}`}>{opt.label}</div>
                   <div className="text-xs text-telegraph-muted mt-0.5">{opt.desc}</div>
                 </div>
               </button>
@@ -101,10 +105,10 @@ export function InputSourceDialog({ open, onSelect, onClose, initial }: Props) {
               <div className="text-sm text-destructive">No microphone detected or permission denied.</div>
             ) : (
               <Select value={deviceId} onValueChange={setDeviceId}>
-                <SelectTrigger className="bg-telegraph-bg border-telegraph-border">
+                <SelectTrigger className="bg-telegraph-bg border-telegraph-border rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-telegraph-card border-telegraph-border">
+                <SelectContent className="bg-telegraph-surface border-telegraph-border">
                   {devices.map(d => (
                     <SelectItem key={d.deviceId} value={d.deviceId}>
                       {d.label || `Microphone ${d.deviceId.slice(0, 6)}`}
@@ -120,7 +124,7 @@ export function InputSourceDialog({ open, onSelect, onClose, initial }: Props) {
           {onClose && (
             <Button variant="ghost" onClick={onClose} className="text-telegraph-muted">Cancel</Button>
           )}
-          <Button onClick={confirm} className="bg-telegraph-accent text-telegraph-bg hover:bg-telegraph-accent/90">
+          <Button onClick={confirm} className="rounded-full px-6 bg-gradient-sent text-white hover:opacity-90 shadow-bubble">
             Use this input
           </Button>
         </div>
