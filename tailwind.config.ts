@@ -59,12 +59,24 @@ export default {
         },
         telegraph: {
           bg: "hsl(var(--telegraph-bg))",
+          surface: "hsl(var(--telegraph-surface))",
           card: "hsl(var(--telegraph-card))",
           border: "hsl(var(--telegraph-border))",
           text: "hsl(var(--telegraph-text))",
           muted: "hsl(var(--telegraph-muted))",
           accent: "hsl(var(--telegraph-accent))",
+          "accent-2": "hsl(var(--telegraph-accent-2))",
+          "bubble-in": "hsl(var(--telegraph-bubble-in))",
+          online: "hsl(var(--telegraph-online))",
         },
+      },
+      backgroundImage: {
+        "gradient-sent": "var(--gradient-sent)",
+        "gradient-app": "var(--gradient-bg)",
+      },
+      boxShadow: {
+        bubble: "var(--shadow-bubble)",
+        soft: "var(--shadow-soft)",
       },
       borderRadius: {
         lg: "var(--radius)",
