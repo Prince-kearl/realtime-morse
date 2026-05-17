@@ -48,11 +48,14 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-telegraph-bg text-telegraph-text flex items-center justify-center px-4">
-      <Card className="w-full max-w-md border-telegraph-border bg-telegraph-card">
+    <div className="min-h-screen bg-gradient-app text-telegraph-text flex items-center justify-center px-4">
+      <Card className="w-full max-w-md border-telegraph-border bg-telegraph-surface/80 backdrop-blur-xl shadow-soft">
         <CardContent className="p-8 space-y-6">
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold">⚡ Morse Telegraph</h1>
+          <div className="text-center space-y-2">
+            <div className="mx-auto h-14 w-14 rounded-full bg-gradient-sent flex items-center justify-center shadow-bubble">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">Morse Telegraph</h1>
             <p className="text-sm text-telegraph-muted">
               {mode === 'signin' ? 'Sign in to start sending signals' : 'Create your operator account'}
             </p>
@@ -60,29 +63,29 @@ export default function Auth() {
           <form onSubmit={submit} className="space-y-4">
             {mode === 'signup' && (
               <div className="space-y-1.5">
-                <Label htmlFor="username">Operator handle</Label>
+                <Label htmlFor="username" className="text-telegraph-muted">Operator handle</Label>
                 <Input id="username" value={username} onChange={e => setUsername(e.target.value)} placeholder="morse_op" required
-                  className="bg-telegraph-bg border-telegraph-border" />
+                  className="bg-telegraph-bg border-telegraph-border rounded-xl h-11" />
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-telegraph-muted">Email</Label>
               <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                className="bg-telegraph-bg border-telegraph-border" />
+                className="bg-telegraph-bg border-telegraph-border rounded-xl h-11" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-telegraph-muted">Password</Label>
               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required
-                className="bg-telegraph-bg border-telegraph-border" />
+                className="bg-telegraph-bg border-telegraph-border rounded-xl h-11" />
             </div>
-            <Button type="submit" disabled={busy} className="w-full bg-telegraph-accent text-telegraph-bg hover:bg-telegraph-accent/90">
+            <Button type="submit" disabled={busy} className="w-full h-11 rounded-xl bg-gradient-sent text-white hover:opacity-90 shadow-bubble">
               {busy ? '...' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </Button>
           </form>
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="w-full text-sm text-telegraph-muted hover:text-telegraph-accent"
+            className="w-full text-sm text-telegraph-muted hover:text-telegraph-accent-2 transition-colors"
           >
             {mode === 'signin' ? "No account? Sign up" : 'Have an account? Sign in'}
           </button>

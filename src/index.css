@@ -33,13 +33,22 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Telegraph theme */
-    --telegraph-bg: 220 20% 7%;
-    --telegraph-card: 220 18% 11%;
-    --telegraph-border: 220 15% 18%;
-    --telegraph-text: 40 20% 90%;
-    --telegraph-muted: 220 10% 45%;
-    --telegraph-accent: 38 92% 50%;
+    /* Telegraph theme — deep navy + violet gradient */
+    --telegraph-bg: 232 38% 12%;
+    --telegraph-surface: 232 32% 16%;
+    --telegraph-card: 232 28% 20%;
+    --telegraph-border: 232 22% 28%;
+    --telegraph-text: 230 25% 96%;
+    --telegraph-muted: 232 15% 62%;
+    --telegraph-accent: 258 85% 68%;
+    --telegraph-accent-2: 280 80% 72%;
+    --telegraph-bubble-in: 232 24% 26%;
+    --telegraph-online: 142 70% 50%;
+
+    --gradient-sent: linear-gradient(135deg, hsl(258 85% 68%), hsl(280 80% 72%));
+    --gradient-bg: radial-gradient(ellipse at top, hsl(258 50% 20%) 0%, hsl(232 38% 10%) 60%);
+    --shadow-bubble: 0 6px 18px -8px hsl(258 85% 50% / 0.45);
+    --shadow-soft: 0 8px 30px -12px hsl(232 60% 4% / 0.6);
   }
 
   .dark {
