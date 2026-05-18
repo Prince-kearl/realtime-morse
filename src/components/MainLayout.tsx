@@ -14,9 +14,6 @@ import {
   Radio,
   History,
   BarChart3,
-  Home,
-  Layers,
-  List,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -87,80 +84,91 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Sidebar */}
       {(!isMobile || mobileMenuOpen) && (
-        <aside className="w-full md:w-72 lg:w-64 border-r border-telegraph-border flex flex-col bg-telegraph-bg">
-          {/* Logo - desktop only */}
-          <div className="hidden md:flex items-center gap-3 border-b border-telegraph-border px-4 py-6">
-            <Radio className="h-7 w-7 text-telegraph-accent" />
-            <div>
-              <h1 className="text-base font-bold tracking-wide">Morse Telegraph</h1>
-              <p className="text-xs text-telegraph-muted">Real-time messaging</p>
-            </div>
-          </div>
+        <>
+          {isMobile && mobileMenuOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/30 md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-hidden="true"
+            />
+          )}
 
-          {/* Navigation */}
-          <ScrollArea className="flex-1 px-3 py-4">
-            <div className="space-y-1">
-              {navItems.map(({ path, label, icon: Icon }) => {
-                const isActive = location.pathname === path;
-                return (
-                  <button
-                    key={path}
-                    onClick={() => handleNavClick(path)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-telegraph-accent/10 text-telegraph-accent'
-                        : 'text-telegraph-muted hover:text-telegraph-accent hover:bg-telegraph-accent/5'
-                    }`}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
-                    <span className="truncate">{label}</span>
-                  </button>
-                );
-              })}
+          <aside className={`flex flex-col bg-telegraph-bg border-r border-telegraph-border ${
+            isMobile ? 'fixed inset-y-0 left-0 z-50 w-full max-w-xs shadow-2xl md:relative md:w-72 lg:w-64' : 'w-full md:w-72 lg:w-64'
+          }`}>
+            {/* Logo - desktop only */}
+            <div className="hidden md:flex items-center gap-3 border-b border-telegraph-border px-4 py-6">
+              <Radio className="h-7 w-7 text-telegraph-accent" />
+              <div>
+                <h1 className="text-base font-bold tracking-wide">Morse Telegraph</h1>
+                <p className="text-xs text-telegraph-muted">Real-time messaging</p>
+              </div>
             </div>
-          </ScrollArea>
 
-          {/* Sign out button */}
-          <div className="border-t border-telegraph-border p-4">
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              className="w-full justify-start text-telegraph-muted hover:text-red-400 hover:bg-red-500/10"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </aside>
+            {/* Navigation */}
+            <ScrollArea className="flex-1 px-3 py-4">
+              <div className="space-y-1">
+                {navItems.map(({ path, label, icon: Icon }) => {
+                  const isActive = location.pathname === path;
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => handleNavClick(path)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-telegraph-accent/10 text-telegraph-accent'
+                          : 'text-telegraph-muted hover:text-telegraph-accent hover:bg-telegraph-accent/5'
+                      }`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+
+            {/* Sign out button */}
+            <div className="border-t border-telegraph-border p-4">
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                className="w-full justify-start text-telegraph-muted hover:text-red-400 hover:bg-red-500/10"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </aside>
+        </>
       )}
 
       {/* Main content */}
--      <div className="flex-1 flex flex-col overflow-hidden">
--        {children}
--      </div>
-+      <div className="flex-1 flex flex-col overflow-hidden">
-+        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1">
-+          {children}
-+        </div>
-+      </div>
-+
-+      {/* Mobile bottom nav */}
-+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 md:hidden">
-+        <div className="bg-telegraph-card/90 backdrop-blur rounded-full shadow-lg px-3 py-2 flex items-center gap-3">
-+          {mobileNav.map(({ path, icon: Icon, label }) => (
-+            <button
-+              key={path}
-+              onClick={() => navigate(path)}
-+              className={`flex flex-col items-center justify-center text-xs text-telegraph-muted px-3 py-1 rounded ${location.pathname === path ? 'text-telegraph-accent' : ''}`}
-+              aria-label={label}
-+            >
-+              <Icon className="h-5 w-5" />
-+              <span className="mt-1">{label}</span>
-+            </button>
-+          ))}
-+        </div>
-+      </nav>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 flex-1">
+          {children}
+        </div>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 md:hidden">
+        <div className="bg-telegraph-card/90 backdrop-blur rounded-full shadow-lg px-3 py-2 flex items-center gap-3">
+          {mobileNav.map(({ path, icon: Icon, label }) => (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              className={`flex flex-col items-center justify-center text-xs text-telegraph-muted px-3 py-1 rounded ${
+                location.pathname === path ? 'text-telegraph-accent' : ''
+              }`}
+              aria-label={label}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="mt-1">{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
      </div>
    );
  }
