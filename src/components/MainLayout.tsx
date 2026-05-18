@@ -14,6 +14,9 @@ import {
   Radio,
   History,
   BarChart3,
+  Home,
+  Layers,
+  List,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -30,6 +33,13 @@ const navItems = [
   { path: '/reference', label: 'Reference', icon: Radio },
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/settings', label: 'Settings', icon: Settings },
+];
+
+const mobileNav = [
+  { path: '/chat', icon: MessageSquare, label: 'Chat' },
+  { path: '/translator', icon: Zap, label: 'Translate' },
+  { path: '/tools', icon: BarChart3, label: 'Tools' },
+  { path: '/learn', icon: BookOpen, label: 'Learn' },
 ];
 
 export function MainLayout({ children }: MainLayoutProps) {
@@ -58,17 +68,18 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="h-screen bg-telegraph-bg text-telegraph-text flex flex-col md:flex-row">
-      {/* Mobile menu button */}
+      {/* Mobile header */}
       <div className="md:hidden border-b border-telegraph-border p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Radio className="h-5 w-5 text-telegraph-accent" />
-          <h1 className="text-sm font-bold tracking-wide">Morse</h1>
+          <h1 className="text-sm font-bold tracking-wide">Morse Telegraph</h1>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="text-telegraph-muted hover:text-telegraph-accent"
+          aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -76,18 +87,18 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Sidebar */}
       {(!isMobile || mobileMenuOpen) && (
-        <aside className="w-full md:w-64 border-r border-telegraph-border flex flex-col bg-telegraph-bg">
+        <aside className="w-full md:w-72 lg:w-64 border-r border-telegraph-border flex flex-col bg-telegraph-bg">
           {/* Logo - desktop only */}
-          <div className="hidden md:flex items-center gap-2 border-b border-telegraph-border px-4 py-6">
-            <Radio className="h-6 w-6 text-telegraph-accent" />
+          <div className="hidden md:flex items-center gap-3 border-b border-telegraph-border px-4 py-6">
+            <Radio className="h-7 w-7 text-telegraph-accent" />
             <div>
-              <h1 className="text-sm font-bold tracking-wide">Morse Telegraph</h1>
+              <h1 className="text-base font-bold tracking-wide">Morse Telegraph</h1>
               <p className="text-xs text-telegraph-muted">Real-time messaging</p>
             </div>
           </div>
 
           {/* Navigation */}
-          <ScrollArea className="flex-1 px-2 py-4">
+          <ScrollArea className="flex-1 px-3 py-4">
             <div className="space-y-1">
               {navItems.map(({ path, label, icon: Icon }) => {
                 const isActive = location.pathname === path;
@@ -100,9 +111,10 @@ export function MainLayout({ children }: MainLayoutProps) {
                         ? 'bg-telegraph-accent/10 text-telegraph-accent'
                         : 'text-telegraph-muted hover:text-telegraph-accent hover:bg-telegraph-accent/5'
                     }`}
+                    aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{label}</span>
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{label}</span>
                   </button>
                 );
               })}
@@ -124,9 +136,31 @@ export function MainLayout({ children }: MainLayoutProps) {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {children}
-      </div>
-    </div>
-  );
-}
+-      <div className="flex-1 flex flex-col overflow-hidden">
+-        {children}
+-      </div>
++      <div className="flex-1 flex flex-col overflow-hidden">
++        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1">
++          {children}
++        </div>
++      </div>
++
++      {/* Mobile bottom nav */}
++      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 md:hidden">
++        <div className="bg-telegraph-card/90 backdrop-blur rounded-full shadow-lg px-3 py-2 flex items-center gap-3">
++          {mobileNav.map(({ path, icon: Icon, label }) => (
++            <button
++              key={path}
++              onClick={() => navigate(path)}
++              className={`flex flex-col items-center justify-center text-xs text-telegraph-muted px-3 py-1 rounded ${location.pathname === path ? 'text-telegraph-accent' : ''}`}
++              aria-label={label}
++            >
++              <Icon className="h-5 w-5" />
++              <span className="mt-1">{label}</span>
++            </button>
++          ))}
++        </div>
++      </nav>
+     </div>
+   );
+ }
