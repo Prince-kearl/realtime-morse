@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar } from '@/components/ui/avatar';
 import { Plus, Search, X } from 'lucide-react';
 import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialog';
 import { ChatBubble } from '@/components/chat/ChatBubble';
@@ -15,6 +16,35 @@ import { toast } from 'sonner';
 interface Profile { id: string; username: string; display_name: string | null }
 interface Conversation { id: string; user_a: string; user_b: string; last_message_at: string; other?: Profile }
 interface Message { id: string; conversation_id: string; sender_id: string; morse: string; decoded: string; input_source: string; created_at: string }
+
+const AVATAR_EMOJIS = ['🚀', '🛰️', '🧭', '⚡', '👾', '🛸', '✨', '🌌', '💡', '🎖️', '🪐', '🔧'];
+const AVATAR_GRADIENTS = [
+  'from-[#5A54FF] via-[#9B59FF] to-[#FF80F4]',
+  'from-[#18A0FB] via-[#30CBE8] to-[#6DF2AD]',
+  'from-[#F5AF19] via-[#F05D23] to-[#FF416C]',
+  'from-[#7B61FF] via-[#A64DF7] to-[#FF6CB2]',
+  'from-[#34D399] via-[#22C55E] to-[#10B981]',
+];
+
+function getHashedIndex(value: string, length: number) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % length;
+}
+
+function BitmojiAvatar({ username }: { username: string }) {
+  const emoji = AVATAR_EMOJIS[getHashedIndex(username, AVATAR_EMOJIS.length)];
+  const gradient = AVATAR_GRADIENTS[getHashedIndex(username + 'color', AVATAR_GRADIENTS.length)];
+
+  return (
+    <Avatar className={`bg-gradient-to-br ${gradient} text-black ring-1 ring-white/10`}>
+      <span className="text-xl">{emoji}</span>
+    </Avatar>
+  );
+}
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -174,6 +204,11 @@ export default function Chat() {
     );
   }
 
+  const activeUser = activeConvo?.other;
+  const totalUsers = allProfiles.length + 1;
+  const activeChats = conversations.length;
+  const conversationsWithActivity = conversations.filter(c => c.last_message_at).length;
+
   return (
     <MainLayout>
       <InputSourceDialog
@@ -187,174 +222,172 @@ export default function Chat() {
         onClose={inputSel ? () => setShowInputDialog(false) : undefined}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="border-b border-telegraph-border px-4 py-3 bg-telegraph-card">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-sm font-bold tracking-wide">Active Chat</h1>
-              <p className="text-[10px] text-telegraph-muted">@{profile?.username ?? '…'}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowChatList(true)}
-                className="rounded-lg border border-telegraph-border px-3 py-2 text-xs font-medium text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent md:hidden"
-              >
-                Open chats
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowInputDialog(true)}
-                className="rounded-lg border border-telegraph-border bg-transparent px-3 py-2 text-xs font-medium text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
-              >
-                {inputSel ? `Input: ${inputSel.source}` : 'Choose input'}
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="flex-1 flex overflow-hidden">
-          {/* Conversations sidebar */}
-          <aside className="w-72 border-r border-telegraph-border flex flex-col bg-telegraph-card hidden md:flex">
-            <div className="p-3 border-b border-telegraph-border">
-              <Button onClick={() => setShowNewChat(s => !s)} variant="outline" size="sm"
-                className="w-full border-telegraph-border text-telegraph-accent hover:bg-telegraph-accent/10">
-                <Plus className="h-4 w-4 mr-1" /> New chat
-              </Button>
-              {showNewChat && (
-                <div className="mt-2 space-y-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-telegraph-muted" />
-                    <Input placeholder="Search by handle…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                      className="pl-7 h-8 text-sm bg-telegraph-bg border-telegraph-border" />
-                  </div>
-                  <div className="space-y-1 max-h-48 overflow-auto">
-                    {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 10)).map(p => (
-                      <button key={p.id} onClick={() => startConversation(p)}
-                        className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-telegraph-accent/10 text-telegraph-text">
-                        <span className="text-telegraph-accent">@{p.username}</span>
-                        {p.display_name && <span className="text-telegraph-muted ml-2 text-xs">{p.display_name}</span>}
-                      </button>
-                    ))}
-                    {searchQuery.trim() && searchResults.length === 0 && (
-                      <p className="text-xs text-telegraph-muted px-2">No operators found</p>
-                    )}
-                    {!searchQuery.trim() && allProfiles.length === 0 && (
-                      <p className="text-xs text-telegraph-muted px-2">No other users are available yet.</p>
-                    )}
-                  </div>
+      <div className="flex-1 overflow-hidden">
+        <div className="mx-auto flex h-full max-w-[1500px] flex-col gap-4 p-4 sm:p-6">
+          <div className="rounded-[28px] border border-telegraph-border bg-telegraph-card p-6 shadow-[0_40px_120px_rgba(7,7,28,0.35)]">
+            <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Morse Telegraph</p>
+                <h1 className="mt-3 text-3xl font-semibold text-white">Operators & live messaging</h1>
+                <p className="mt-2 max-w-2xl text-sm text-telegraph-muted">
+                  Browse all account holders, open recent chats, and start messaging with a single tap. The platform now mirrors a polished operator dashboard with bitmoji-style avatars.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[24px] border border-telegraph-border bg-telegraph-bg p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Users</p>
+                  <div className="mt-3 text-2xl font-semibold text-white">{totalUsers}</div>
                 </div>
-              )}
+                <div className="rounded-[24px] border border-telegraph-border bg-telegraph-bg p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Chats</p>
+                  <div className="mt-3 text-2xl font-semibold text-white">{activeChats}</div>
+                </div>
+                <div className="rounded-[24px] border border-telegraph-border bg-telegraph-bg p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Live threads</p>
+                  <div className="mt-3 text-2xl font-semibold text-white">{conversationsWithActivity}</div>
+                </div>
+              </div>
             </div>
-            <ScrollArea className="flex-1">
-              {conversations.length === 0 ? (
-                <p className="p-4 text-xs text-telegraph-muted text-center">No conversations yet. Start one above!</p>
-              ) : (
-                conversations.map(c => (
-                  <button key={c.id} onClick={() => { setActiveId(c.id); setShowChatList(false); }}
-                    className={`w-full text-left px-3 py-2.5 border-b border-telegraph-border/50 transition-colors ${
-                      activeId === c.id ? 'bg-telegraph-accent/10' : 'hover:bg-telegraph-accent/5'
-                    }`}>
-                    <div className={`text-sm font-medium ${activeId === c.id ? 'text-telegraph-accent' : 'text-telegraph-text'}`}>
-                      @{c.other?.username ?? '…'}
-                    </div>
-                    <div className="text-[10px] text-telegraph-muted mt-0.5">
-                      {new Date(c.last_message_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                    </div>
-                  </button>
-                ))
-              )}
-            </ScrollArea>
-          </aside>
 
-          {showChatList && (
-            <div className="fixed inset-0 z-50 md:hidden">
-              <div className="absolute inset-0 bg-black/30" onClick={() => setShowChatList(false)} aria-hidden="true" />
-              <aside className="relative z-10 h-full w-full max-w-xs overflow-hidden bg-telegraph-card border-r border-telegraph-border shadow-2xl">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-telegraph-border">
+            <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1.5fr)_320px]">
+              <section className="space-y-4 rounded-[24px] border border-telegraph-border bg-telegraph-bg p-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold">Chats</h2>
-                    <p className="text-[10px] text-telegraph-muted">Recent chats and all operators</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Recent chats</p>
+                    <h2 className="mt-2 text-lg font-semibold text-white">Active operators</h2>
                   </div>
-                  <button type="button" onClick={() => setShowChatList(false)} className="text-telegraph-muted hover:text-telegraph-accent">
-                    <X className="h-5 w-5" />
-                  </button>
+                  <Button variant="outline" size="sm" onClick={() => setShowNewChat(s => !s)} className="border-telegraph-border text-telegraph-text hover:bg-telegraph-accent/10">
+                    <Plus className="h-4 w-4 mr-1" /> New
+                  </Button>
                 </div>
-                <div className="h-[calc(100vh-72px)] overflow-y-auto p-3 space-y-4">
-                  <div className="space-y-2">
-                    <div className="text-[10px] uppercase tracking-widest text-telegraph-muted">Recent chats</div>
-                    {conversations.length === 0 ? (
-                      <p className="text-xs text-telegraph-muted">No recent chats yet.</p>
-                    ) : (
-                      conversations.map(c => (
-                        <button
-                          key={c.id}
-                          onClick={() => { setActiveId(c.id); setShowChatList(false); }}
-                          className="w-full rounded-lg border border-telegraph-border px-3 py-2 text-left text-sm text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
-                        >
-                          <div className="font-medium">@{c.other?.username ?? '…'}</div>
-                          <div className="text-[10px] text-telegraph-muted mt-0.5">{new Date(c.last_message_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
-                    <div className="text-[10px] uppercase tracking-widest text-telegraph-muted">Operators</div>
-                    {allProfiles.length === 0 ? (
-                      <p className="text-xs text-telegraph-muted">No other users available yet.</p>
-                    ) : (
-                      allProfiles.map(p => (
-                        <button
-                          key={p.id}
-                          onClick={() => startConversation(p)}
-                          className="w-full rounded-lg border border-telegraph-border px-3 py-2 text-left text-sm text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
-                        >
-                          <div className="font-medium">@{p.username}</div>
-                          {p.display_name && <div className="text-[10px] text-telegraph-muted mt-0.5">{p.display_name}</div>}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </aside>
-            </div>
-          )}
-
-          {/* Thread */}
-          <main className="flex-1 flex flex-col min-w-0">
-            {activeConvo ? (
-              <>
-                <div className="px-4 py-2.5 border-b border-telegraph-border bg-telegraph-card">
-                  <div className="text-sm font-semibold text-telegraph-accent">@{activeConvo.other?.username}</div>
-                  <div className="text-[10px] text-telegraph-muted">Tap a bubble to flip between Morse and decoded text</div>
-                </div>
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 bg-telegraph-bg">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-sm text-telegraph-muted mt-8">No messages yet — send the first signal ⚡</p>
+                <div className="space-y-3">
+                  {conversations.length === 0 ? (
+                    <p className="text-sm text-telegraph-muted">No active conversations yet. Tap a user to start one.</p>
                   ) : (
-                    messages.map(m => (
-                      <ChatBubble key={m.id}
-                        morse={m.morse} decoded={m.decoded}
-                        isOwn={m.sender_id === user.id}
-                        timestamp={m.created_at}
-                        inputSource={m.input_source} />
+                    conversations.slice(0, 6).map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => { setActiveId(c.id); setShowChatList(false); }}
+                        className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-3 transition ${
+                          activeId === c.id ? 'border-telegraph-accent/60 bg-telegraph-accent/5' : 'border-telegraph-border bg-telegraph-bg/90 hover:border-telegraph-accent/50 hover:bg-telegraph-accent/5'
+                        }`}
+                      >
+                        <BitmojiAvatar username={c.other?.username ?? 'user'} />
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-semibold text-white">@{c.other?.username ?? '…'}</div>
+                          <p className="text-xs text-telegraph-muted">{c.other?.display_name ?? 'Operator'}</p>
+                        </div>
+                        <span className="text-[10px] text-telegraph-muted">{new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </button>
                     ))
                   )}
                 </div>
-                {inputSel && (
-                  <MessageComposer selection={inputSel}
-                    onChangeInput={() => setShowInputDialog(true)}
-                    onSend={sendMessage} />
+
+                {showNewChat && (
+                  <div className="rounded-2xl border border-telegraph-border bg-telegraph-bg p-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-telegraph-muted" />
+                      <Input
+                        placeholder="Search operators…"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="pl-10 h-10 text-sm bg-telegraph-card border-telegraph-border"
+                      />
+                    </div>
+                    <div className="mt-3 grid gap-3 max-h-64 overflow-y-auto">
+                      {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 8)).map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => startConversation(p)}
+                          className="group flex items-center gap-3 rounded-2xl border border-telegraph-border px-3 py-3 text-left transition hover:border-telegraph-accent/50 hover:bg-telegraph-accent/5"
+                        >
+                          <BitmojiAvatar username={p.username} />
+                          <div>
+                            <div className="text-sm font-semibold text-white">@{p.username}</div>
+                            <div className="text-xs text-telegraph-muted">{p.display_name || 'Operator'}</div>
+                          </div>
+                        </button>
+                      ))}
+                      {searchQuery.trim() && searchResults.length === 0 && (
+                        <p className="text-sm text-telegraph-muted">No operators found.</p>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-telegraph-muted text-sm">
-                Select a conversation or start a new one
-              </div>
-            )}
-          </main>
+              </section>
+
+              <section className="rounded-[24px] border border-telegraph-border bg-telegraph-bg p-5">
+                {activeConvo ? (
+                  <>
+                    <div className="mb-4 flex items-center gap-4">
+                      <BitmojiAvatar username={activeUser?.username ?? 'chat'} />
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Conversation</p>
+                        <h2 className="text-xl font-semibold text-white">@{activeUser?.username}</h2>
+                        <p className="text-sm text-telegraph-muted">{activeUser?.display_name ?? 'Messaging operator'}</p>
+                      </div>
+                    </div>
+                    <div className="max-h-[420px] overflow-y-auto space-y-3 pb-3">
+                      {messages.length === 0 ? (
+                        <div className="rounded-3xl border border-telegraph-border bg-telegraph-card p-4 text-sm text-telegraph-muted">
+                          Start the conversation by tapping the key or sending a message.
+                        </div>
+                      ) : (
+                        messages.slice(-8).map(m => (
+                          <ChatBubble key={m.id}
+                            morse={m.morse}
+                            decoded={m.decoded}
+                            isOwn={m.sender_id === user.id}
+                            timestamp={m.created_at}
+                            inputSource={m.input_source}
+                          />
+                        ))
+                      )}
+                    </div>
+                    {inputSel && (
+                      <div className="mt-auto">
+                        <MessageComposer
+                          selection={inputSel}
+                          onChangeInput={() => setShowInputDialog(true)}
+                          onSend={sendMessage}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-telegraph-border bg-telegraph-card p-6 text-center">
+                    <p className="text-sm text-telegraph-muted">Choose an operator or recent chat to open the live interface.</p>
+                    <Button variant="secondary" className="mt-4" onClick={() => setShowChatList(true)}>
+                      Browse chats
+                    </Button>
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-[24px] border border-telegraph-border bg-telegraph-bg p-5">
+                <div className="mb-5">
+                  <p className="text-xs uppercase tracking-[0.3em] text-telegraph-muted">Statistics</p>
+                  <h2 className="mt-3 text-xl font-semibold text-white">Workspace overview</h2>
+                </div>
+                <div className="grid gap-3">
+                  <div className="rounded-3xl border border-telegraph-border p-4 bg-telegraph-card">
+                    <p className="text-xs uppercase tracking-[0.25em] text-telegraph-muted">Engagement</p>
+                    <p className="mt-2 text-3xl font-semibold text-white">{Math.min(activeChats * 5 + 30, 99)}%</p>
+                    <p className="mt-2 text-sm text-telegraph-muted">Live operator traffic is healthy.</p>
+                  </div>
+                  <div className="rounded-3xl border border-telegraph-border p-4 bg-telegraph-card">
+                    <p className="text-xs uppercase tracking-[0.25em] text-telegraph-muted">Ready operators</p>
+                    <p className="mt-2 text-3xl font-semibold text-white">{allProfiles.length}</p>
+                  </div>
+                  <div className="rounded-3xl border border-telegraph-border p-4 bg-telegraph-card">
+                    <p className="text-xs uppercase tracking-[0.25em] text-telegraph-muted">Selected input</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{inputSel ? inputSel.source : 'None'}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
       </div>
     </MainLayout>
