@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Settings {
   audioEnabled: boolean;
@@ -27,7 +28,7 @@ const DEFAULT_SETTINGS: Settings = {
   wordGap: 1400,
   targetFrequency: 600,
   volumeThreshold: 0.05,
-  theme: 'dark',
+  theme: 'light',
   compactMode: false,
   autoScroll: true,
 };
@@ -35,6 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
 export default function Settings() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
+  const { updateTheme } = useTheme();
 
   useEffect(() => {
     // Load settings from localStorage
@@ -50,6 +52,8 @@ export default function Settings() {
 
   const handleSave = () => {
     localStorage.setItem('morse-settings', JSON.stringify(settings));
+    // Apply theme change
+    updateTheme(settings.theme);
     setHasChanges(false);
     toast.success('Settings saved');
   };
@@ -58,6 +62,7 @@ export default function Settings() {
     if (confirm('Reset all settings to default?')) {
       setSettings(DEFAULT_SETTINGS);
       localStorage.setItem('morse-settings', JSON.stringify(DEFAULT_SETTINGS));
+      updateTheme(DEFAULT_SETTINGS.theme);
       setHasChanges(false);
       toast.success('Settings reset to default');
     }
@@ -189,6 +194,21 @@ export default function Settings() {
                 <CardDescription className="text-xs">Customize the user interface</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Theme */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-telegraph-text">Theme</p>
+                    <p className="text-xs text-telegraph-muted">Switch between light and dark mode</p>
+                  </div>
+                  <Switch
+                    checked={settings.theme === 'dark'}
+                    onCheckedChange={v => {
+                      const newTheme = v ? 'dark' : 'light';
+                      updateSetting('theme', newTheme);
+                    }}
+                  />
+                </div>
+
                 {/* Compact mode */}
                 <div className="flex items-center justify-between">
                   <div>
