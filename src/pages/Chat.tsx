@@ -328,7 +328,7 @@ export default function Chat() {
                         <p className="text-sm text-telegraph-muted">{activeUser?.display_name ?? 'Messaging operator'}</p>
                       </div>
                     </div>
-                    <div className="max-h-[420px] overflow-y-auto space-y-3 pb-3">
+                    <div ref={scrollRef} className="max-h-[420px] overflow-y-auto space-y-3 pb-3">
                       {messages.length === 0 ? (
                         <div className="rounded-3xl border border-telegraph-border bg-telegraph-card p-4 text-sm text-telegraph-muted">
                           Start the conversation by tapping the key or sending a message.
