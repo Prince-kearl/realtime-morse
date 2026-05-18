@@ -5,10 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LogOut, Plus, Search, Radio } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialog';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
+import { MainLayout } from '@/components/MainLayout';
 import { toast } from 'sonner';
 
 interface Profile { id: string; username: string; display_name: string | null }
@@ -134,11 +135,15 @@ export default function Chat() {
   const activeConvo = conversations.find(c => c.id === activeId);
 
   if (authLoading || !user) {
-    return <div className="min-h-screen bg-telegraph-bg flex items-center justify-center text-telegraph-muted">Loading…</div>;
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center flex-1 text-telegraph-muted">Loading…</div>
+      </MainLayout>
+    );
   }
 
   return (
-    <div className="h-screen bg-telegraph-bg text-telegraph-text flex flex-col">
+    <MainLayout>
       <InputSourceDialog
         open={showInputDialog}
         initial={inputSel?.source}
@@ -146,105 +151,101 @@ export default function Chat() {
         onClose={inputSel ? () => setShowInputDialog(false) : undefined}
       />
 
-      {/* Header */}
-      <header className="border-b border-telegraph-border px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-telegraph-accent" />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="border-b border-telegraph-border px-4 py-3 bg-telegraph-card">
           <div>
-            <h1 className="text-sm font-bold tracking-wide">Morse Telegraph</h1>
+            <h1 className="text-sm font-bold tracking-wide">Active Chat</h1>
             <p className="text-[10px] text-telegraph-muted">@{profile?.username ?? '…'}</p>
           </div>
-        </div>
-        <Button variant="ghost" size="sm" onClick={signOut} className="text-telegraph-muted hover:text-telegraph-accent">
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </header>
+        </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-72 border-r border-telegraph-border flex flex-col">
-          <div className="p-3 border-b border-telegraph-border">
-            <Button onClick={() => setShowNewChat(s => !s)} variant="outline" size="sm"
-              className="w-full border-telegraph-border text-telegraph-accent hover:bg-telegraph-accent/10">
-              <Plus className="h-4 w-4 mr-1" /> New chat
-            </Button>
-            {showNewChat && (
-              <div className="mt-2 space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-telegraph-muted" />
-                  <Input placeholder="Search by handle…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-7 h-8 text-sm bg-telegraph-bg border-telegraph-border" />
+        <div className="flex-1 flex overflow-hidden">
+          {/* Conversations sidebar */}
+          <aside className="w-72 border-r border-telegraph-border flex flex-col bg-telegraph-card hidden md:flex">
+            <div className="p-3 border-b border-telegraph-border">
+              <Button onClick={() => setShowNewChat(s => !s)} variant="outline" size="sm"
+                className="w-full border-telegraph-border text-telegraph-accent hover:bg-telegraph-accent/10">
+                <Plus className="h-4 w-4 mr-1" /> New chat
+              </Button>
+              {showNewChat && (
+                <div className="mt-2 space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-telegraph-muted" />
+                    <Input placeholder="Search by handle…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-7 h-8 text-sm bg-telegraph-bg border-telegraph-border" />
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-auto">
+                    {searchResults.map(p => (
+                      <button key={p.id} onClick={() => startConversation(p)}
+                        className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-telegraph-accent/10 text-telegraph-text">
+                        <span className="text-telegraph-accent">@{p.username}</span>
+                        {p.display_name && <span className="text-telegraph-muted ml-2 text-xs">{p.display_name}</span>}
+                      </button>
+                    ))}
+                    {searchQuery.trim() && searchResults.length === 0 && (
+                      <p className="text-xs text-telegraph-muted px-2">No operators found</p>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-1 max-h-48 overflow-auto">
-                  {searchResults.map(p => (
-                    <button key={p.id} onClick={() => startConversation(p)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-telegraph-accent/10 text-telegraph-text">
-                      <span className="text-telegraph-accent">@{p.username}</span>
-                      {p.display_name && <span className="text-telegraph-muted ml-2 text-xs">{p.display_name}</span>}
-                    </button>
-                  ))}
-                  {searchQuery.trim() && searchResults.length === 0 && (
-                    <p className="text-xs text-telegraph-muted px-2">No operators found</p>
+              )}
+            </div>
+            <ScrollArea className="flex-1">
+              {conversations.length === 0 ? (
+                <p className="p-4 text-xs text-telegraph-muted text-center">No conversations yet. Start one above!</p>
+              ) : (
+                conversations.map(c => (
+                  <button key={c.id} onClick={() => setActiveId(c.id)}
+                    className={`w-full text-left px-3 py-2.5 border-b border-telegraph-border/50 transition-colors ${
+                      activeId === c.id ? 'bg-telegraph-accent/10' : 'hover:bg-telegraph-accent/5'
+                    }`}>
+                    <div className={`text-sm font-medium ${activeId === c.id ? 'text-telegraph-accent' : 'text-telegraph-text'}`}>
+                      @{c.other?.username ?? '…'}
+                    </div>
+                    <div className="text-[10px] text-telegraph-muted mt-0.5">
+                      {new Date(c.last_message_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </div>
+                  </button>
+                ))
+              )}
+            </ScrollArea>
+          </aside>
+
+          {/* Thread */}
+          <main className="flex-1 flex flex-col min-w-0">
+            {activeConvo ? (
+              <>
+                <div className="px-4 py-2.5 border-b border-telegraph-border bg-telegraph-card">
+                  <div className="text-sm font-semibold text-telegraph-accent">@{activeConvo.other?.username}</div>
+                  <div className="text-[10px] text-telegraph-muted">Tap a bubble to flip between Morse and decoded text</div>
+                </div>
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 bg-telegraph-bg">
+                  {messages.length === 0 ? (
+                    <p className="text-center text-sm text-telegraph-muted mt-8">No messages yet — send the first signal ⚡</p>
+                  ) : (
+                    messages.map(m => (
+                      <ChatBubble key={m.id}
+                        morse={m.morse} decoded={m.decoded}
+                        isOwn={m.sender_id === user.id}
+                        timestamp={m.created_at}
+                        inputSource={m.input_source} />
+                    ))
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-          <ScrollArea className="flex-1">
-            {conversations.length === 0 ? (
-              <p className="p-4 text-xs text-telegraph-muted text-center">No conversations yet. Start one above!</p>
-            ) : (
-              conversations.map(c => (
-                <button key={c.id} onClick={() => setActiveId(c.id)}
-                  className={`w-full text-left px-3 py-2.5 border-b border-telegraph-border/50 transition-colors ${
-                    activeId === c.id ? 'bg-telegraph-accent/10' : 'hover:bg-telegraph-accent/5'
-                  }`}>
-                  <div className={`text-sm font-medium ${activeId === c.id ? 'text-telegraph-accent' : 'text-telegraph-text'}`}>
-                    @{c.other?.username ?? '…'}
-                  </div>
-                  <div className="text-[10px] text-telegraph-muted mt-0.5">
-                    {new Date(c.last_message_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                  </div>
-                </button>
-              ))
-            )}
-          </ScrollArea>
-        </aside>
-
-        {/* Thread */}
-        <main className="flex-1 flex flex-col min-w-0">
-          {activeConvo ? (
-            <>
-              <div className="px-4 py-2.5 border-b border-telegraph-border">
-                <div className="text-sm font-semibold text-telegraph-accent">@{activeConvo.other?.username}</div>
-                <div className="text-[10px] text-telegraph-muted">Tap a bubble to flip between Morse and decoded text</div>
-              </div>
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 bg-telegraph-bg">
-                {messages.length === 0 ? (
-                  <p className="text-center text-sm text-telegraph-muted mt-8">No messages yet — send the first signal ⚡</p>
-                ) : (
-                  messages.map(m => (
-                    <ChatBubble key={m.id}
-                      morse={m.morse} decoded={m.decoded}
-                      isOwn={m.sender_id === user.id}
-                      timestamp={m.created_at}
-                      inputSource={m.input_source} />
-                  ))
+                {inputSel && (
+                  <MessageComposer selection={inputSel}
+                    onChangeInput={() => setShowInputDialog(true)}
+                    onSend={sendMessage} />
                 )}
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-telegraph-muted text-sm">
+                Select a conversation or start a new one
               </div>
-              {inputSel && (
-                <MessageComposer selection={inputSel}
-                  onChangeInput={() => setShowInputDialog(true)}
-                  onSend={sendMessage} />
-              )}
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-telegraph-muted text-sm">
-              Select a conversation or start a new one
-            </div>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 }
