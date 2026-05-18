@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialog';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
@@ -24,10 +24,12 @@ export default function Chat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showChatList, setShowChatList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [inputSel, setInputSel] = useState<InputSelection | null>(null);
-  const [showInputDialog, setShowInputDialog] = useState(true);
+  const [showInputDialog, setShowInputDialog] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // redirect if not signed in
@@ -40,6 +42,34 @@ export default function Chat() {
     if (!user) return;
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       .then(({ data }) => setProfile(data as Profile));
+  }, [user]);
+
+  // restore preferred input source from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('morse-input-selection');
+    if (saved) {
+      try {
+        setInputSel(JSON.parse(saved) as InputSelection);
+      } catch {
+        localStorage.removeItem('morse-input-selection');
+      }
+    } else {
+      setShowInputDialog(true);
+    }
+  }, []);
+
+  // load all other profiles for mobile and new chat lists
+  useEffect(() => {
+    if (!user) return;
+    const loadProfiles = async () => {
+      const { data } = await supabase.from('profiles')
+        .select('*')
+        .neq('id', user.id)
+        .order('username', { ascending: true })
+        .limit(50);
+      setAllProfiles((data as Profile[]) ?? []);
+    };
+    loadProfiles();
   }, [user]);
 
   // load conversations + realtime
@@ -112,6 +142,7 @@ export default function Chat() {
     if (existing) {
       setActiveId(existing.id);
       setShowNewChat(false);
+      setShowChatList(false);
       return;
     }
     const { data, error } = await supabase.from('conversations').insert({ user_a: a, user_b: b }).select().maybeSingle();
@@ -119,6 +150,7 @@ export default function Chat() {
     if (data) {
       setActiveId(data.id);
       setShowNewChat(false);
+      setShowChatList(false);
       setSearchQuery('');
     }
   };
@@ -147,16 +179,38 @@ export default function Chat() {
       <InputSourceDialog
         open={showInputDialog}
         initial={inputSel?.source}
-        onSelect={(sel) => { setInputSel(sel); setShowInputDialog(false); }}
+        onSelect={(sel) => {
+          setInputSel(sel);
+          setShowInputDialog(false);
+          localStorage.setItem('morse-input-selection', JSON.stringify(sel));
+        }}
         onClose={inputSel ? () => setShowInputDialog(false) : undefined}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="border-b border-telegraph-border px-4 py-3 bg-telegraph-card">
-          <div>
-            <h1 className="text-sm font-bold tracking-wide">Active Chat</h1>
-            <p className="text-[10px] text-telegraph-muted">@{profile?.username ?? '…'}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-sm font-bold tracking-wide">Active Chat</h1>
+              <p className="text-[10px] text-telegraph-muted">@{profile?.username ?? '…'}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowChatList(true)}
+                className="rounded-lg border border-telegraph-border px-3 py-2 text-xs font-medium text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent md:hidden"
+              >
+                Open chats
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowInputDialog(true)}
+                className="rounded-lg border border-telegraph-border bg-transparent px-3 py-2 text-xs font-medium text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
+              >
+                {inputSel ? `Input: ${inputSel.source}` : 'Choose input'}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -176,7 +230,7 @@ export default function Chat() {
                       className="pl-7 h-8 text-sm bg-telegraph-bg border-telegraph-border" />
                   </div>
                   <div className="space-y-1 max-h-48 overflow-auto">
-                    {searchResults.map(p => (
+                    {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 10)).map(p => (
                       <button key={p.id} onClick={() => startConversation(p)}
                         className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-telegraph-accent/10 text-telegraph-text">
                         <span className="text-telegraph-accent">@{p.username}</span>
@@ -185,6 +239,9 @@ export default function Chat() {
                     ))}
                     {searchQuery.trim() && searchResults.length === 0 && (
                       <p className="text-xs text-telegraph-muted px-2">No operators found</p>
+                    )}
+                    {!searchQuery.trim() && allProfiles.length === 0 && (
+                      <p className="text-xs text-telegraph-muted px-2">No other users are available yet.</p>
                     )}
                   </div>
                 </div>
@@ -195,7 +252,7 @@ export default function Chat() {
                 <p className="p-4 text-xs text-telegraph-muted text-center">No conversations yet. Start one above!</p>
               ) : (
                 conversations.map(c => (
-                  <button key={c.id} onClick={() => setActiveId(c.id)}
+                  <button key={c.id} onClick={() => { setActiveId(c.id); setShowChatList(false); }}
                     className={`w-full text-left px-3 py-2.5 border-b border-telegraph-border/50 transition-colors ${
                       activeId === c.id ? 'bg-telegraph-accent/10' : 'hover:bg-telegraph-accent/5'
                     }`}>
@@ -210,6 +267,60 @@ export default function Chat() {
               )}
             </ScrollArea>
           </aside>
+
+          {showChatList && (
+            <div className="fixed inset-0 z-50 md:hidden">
+              <div className="absolute inset-0 bg-black/30" onClick={() => setShowChatList(false)} aria-hidden="true" />
+              <aside className="relative z-10 h-full w-full max-w-xs overflow-hidden bg-telegraph-card border-r border-telegraph-border shadow-2xl">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-telegraph-border">
+                  <div>
+                    <h2 className="text-sm font-semibold">Chats</h2>
+                    <p className="text-[10px] text-telegraph-muted">Recent chats and all operators</p>
+                  </div>
+                  <button type="button" onClick={() => setShowChatList(false)} className="text-telegraph-muted hover:text-telegraph-accent">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="h-[calc(100vh-72px)] overflow-y-auto p-3 space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-[10px] uppercase tracking-widest text-telegraph-muted">Recent chats</div>
+                    {conversations.length === 0 ? (
+                      <p className="text-xs text-telegraph-muted">No recent chats yet.</p>
+                    ) : (
+                      conversations.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => { setActiveId(c.id); setShowChatList(false); }}
+                          className="w-full rounded-lg border border-telegraph-border px-3 py-2 text-left text-sm text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
+                        >
+                          <div className="font-medium">@{c.other?.username ?? '…'}</div>
+                          <div className="text-[10px] text-telegraph-muted mt-0.5">{new Date(c.last_message_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[10px] uppercase tracking-widest text-telegraph-muted">Operators</div>
+                    {allProfiles.length === 0 ? (
+                      <p className="text-xs text-telegraph-muted">No other users available yet.</p>
+                    ) : (
+                      allProfiles.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => startConversation(p)}
+                          className="w-full rounded-lg border border-telegraph-border px-3 py-2 text-left text-sm text-telegraph-text hover:border-telegraph-accent hover:text-telegraph-accent"
+                        >
+                          <div className="font-medium">@{p.username}</div>
+                          {p.display_name && <div className="text-[10px] text-telegraph-muted mt-0.5">{p.display_name}</div>}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </aside>
+            </div>
+          )}
 
           {/* Thread */}
           <main className="flex-1 flex flex-col min-w-0">

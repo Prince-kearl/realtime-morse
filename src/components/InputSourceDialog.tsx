@@ -52,10 +52,12 @@ export function InputSourceDialog({ open, onSelect, onClose, initial }: Props) {
   }, [selected]);
 
   const confirm = () => {
-    onSelect({
+    const selection: InputSelection = {
       source: selected,
       audioDeviceId: selected === 'microphone' ? deviceId : undefined,
-    });
+    };
+    localStorage.setItem('morse-input-selection', JSON.stringify(selection));
+    onSelect(selection);
   };
 
   return (
