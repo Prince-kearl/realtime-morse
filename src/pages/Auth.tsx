@@ -75,7 +75,7 @@ export default function Auth() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-telegraph-muted">Password</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required
+              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required
                 className="bg-telegraph-bg border-telegraph-border rounded-xl h-11" />
             </div>
             <Button type="submit" disabled={busy} className="w-full h-11 rounded-xl bg-gradient-sent text-white hover:opacity-90 shadow-bubble">
