@@ -241,69 +241,79 @@ export function MessageComposer({ selection, onChangeInput, onSend }: Props) {
   const Icon = ICONS[selection.source];
 
   return (
-    <div className="border-t border-telegraph-border bg-telegraph-card p-3 space-y-2">
-      <div className="flex items-center justify-between">
+    <div className="rounded-3xl bg-white border border-border p-3 space-y-2 shadow-card">
+      <div className="flex items-center justify-between px-1">
         <button
           onClick={onChangeInput}
-          className="flex items-center gap-2 text-xs text-telegraph-muted hover:text-telegraph-accent transition-colors"
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
         >
           <Icon className="h-3.5 w-3.5" />
-          <span className="uppercase tracking-wider">{selection.source}</span>
+          <span className="uppercase tracking-wider font-semibold">{selection.source}</span>
           <Settings2 className="h-3 w-3" />
         </button>
         {(morseBuffer || currentLetter) && selection.source !== 'text' && (
-          <button onClick={clearAll} className="text-xs text-telegraph-muted hover:text-destructive">Clear</button>
+          <button onClick={clearAll} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
         )}
       </div>
 
       {selection.source === 'text' ? (
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Input
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Type a message…"
-            className="bg-telegraph-bg border-telegraph-border"
+            placeholder="Type your message…"
+            className="flex-1 h-12 rounded-full bg-secondary border-0 px-5 text-[15px]"
           />
-          <Button onClick={handleSend} disabled={!text.trim()} className="bg-telegraph-accent text-telegraph-bg hover:bg-telegraph-accent/90">
+          <Button
+            onClick={handleSend}
+            disabled={!text.trim()}
+            className="h-12 w-12 rounded-full bg-gradient-sent text-white hover:opacity-90 shadow-card p-0"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>
       ) : (
         <>
-          <div className="rounded-md bg-telegraph-bg border border-telegraph-border p-2 min-h-[42px] flex items-center justify-between gap-2">
-            <div className="flex-1 font-mono text-sm text-telegraph-text break-all">
+          <div className="rounded-2xl bg-secondary p-3 min-h-[48px] flex items-center justify-between gap-2">
+            <div className="flex-1 font-mono text-sm break-all">
               {morseBuffer}
-              {currentLetter && <span className="text-telegraph-accent ml-1">{currentLetter}</span>}
+              {currentLetter && <span className="text-primary ml-1">{currentLetter}</span>}
               {!morseBuffer && !currentLetter && (
-                <span className="text-telegraph-muted text-xs italic">
+                <span className="text-muted-foreground text-xs italic">
                   {selection.source === 'microphone' ? 'Listening for tone at 600 Hz…' : 'Tap the key or hold spacebar to begin'}
                 </span>
               )}
             </div>
             {decodedPreview && (
-              <div className="text-xs text-telegraph-muted whitespace-nowrap">→ <span className="text-telegraph-text font-mono">{decodedPreview}</span></div>
+              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                → <span className="text-foreground font-mono">{decodedPreview}</span>
+              </div>
             )}
           </div>
 
-          {(selection.source === 'telegraph') && (
+          {selection.source === 'telegraph' && (
             <button
               onMouseDown={handlePressStart}
               onMouseUp={handlePressEnd}
               onMouseLeave={() => pressing && handlePressEnd()}
               onTouchStart={(e) => { e.preventDefault(); handlePressStart(); }}
               onTouchEnd={(e) => { e.preventDefault(); handlePressEnd(); }}
-              className={`w-full h-12 rounded-md font-bold uppercase tracking-widest text-sm transition-all select-none ${
+              className={`w-full h-14 rounded-2xl font-bold uppercase tracking-widest text-sm transition-all select-none ${
                 pressing
-                  ? 'bg-telegraph-accent text-telegraph-bg shadow-[0_0_20px_hsl(var(--telegraph-accent))]'
-                  : 'bg-telegraph-bg border border-telegraph-border text-telegraph-accent hover:border-telegraph-accent'
+                  ? 'bg-gradient-sent text-white shadow-soft scale-[0.99]'
+                  : 'bg-secondary text-primary hover:bg-secondary/70'
               }`}
             >
               {pressing ? '● Sending' : 'Tap / Hold to Key'}
             </button>
           )}
 
-          <Button onClick={handleSend} disabled={!morseBuffer && !currentLetter} className="w-full bg-telegraph-accent text-telegraph-bg hover:bg-telegraph-accent/90">
+          <Button
+            onClick={handleSend}
+            disabled={!morseBuffer && !currentLetter}
+            className="w-full h-12 rounded-full bg-gradient-sent text-white hover:opacity-90 shadow-card"
+          >
             <Send className="h-4 w-4 mr-2" /> Send
           </Button>
         </>

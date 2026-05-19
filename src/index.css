@@ -4,96 +4,105 @@
 
 @layer base {
   :root {
-    --background: 205 95% 98%;
-    --foreground: 210 15% 12%;
-    --card: 205 96% 100%;
-    --card-foreground: 210 15% 12%;
-    --popover: 205 96% 100%;
-    --popover-foreground: 210 15% 12%;
-    --primary: 196 75% 47%;
-    --primary-foreground: 210 100% 98%;
-    --secondary: 203 60% 92%;
-    --secondary-foreground: 210 15% 18%;
-    --muted: 205 60% 93%;
-    --muted-foreground: 210 25% 35%;
-    --accent: 195 90% 51%;
-    --accent-foreground: 210 100% 98%;
-    --destructive: 353 80% 58%;
-    --destructive-foreground: 210 100% 98%;
-    --border: 205 45% 83%;
-    --input: 205 55% 95%;
-    --ring: 195 90% 55%;
-    --radius: 0.5rem;
-    --sidebar-background: 205 96% 100%;
-    --sidebar-foreground: 210 12% 14%;
-    --sidebar-primary: 200 80% 27%;
-    --sidebar-primary-foreground: 210 100% 98%;
-    --sidebar-accent: 200 90% 90%;
-    --sidebar-accent-foreground: 210 15% 18%;
-    --sidebar-border: 205 45% 83%;
-    --sidebar-ring: 195 90% 55%;
+    --background: 320 100% 99%;
+    --foreground: 240 25% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 25% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 25% 16%;
+    --primary: 335 85% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 20% 96%;
+    --secondary-foreground: 240 25% 20%;
+    --muted: 240 20% 96%;
+    --muted-foreground: 240 10% 50%;
+    --accent: 20 95% 62%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 25% 92%;
+    --input: 240 25% 96%;
+    --ring: 335 85% 60%;
+    --radius: 1rem;
 
-    /* Telegraph theme */
-    --telegraph-bg: 205 96% 100%;
-    --telegraph-card: 206 65% 93%;
-    --telegraph-border: 203 45% 84%;
-    --telegraph-text: 210 16% 18%;
-    --telegraph-muted: 206 30% 55%;
-    --telegraph-accent: 195 90% 51%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 25% 16%;
+    --sidebar-primary: 335 85% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 20% 96%;
+    --sidebar-accent-foreground: 240 25% 16%;
+    --sidebar-border: 240 25% 92%;
+    --sidebar-ring: 335 85% 60%;
+
+    /* Telegraph theme — vibrant gradient style */
+    --telegraph-bg: 0 0% 100%;
+    --telegraph-card: 240 20% 98%;
+    --telegraph-border: 240 25% 92%;
+    --telegraph-text: 240 25% 16%;
+    --telegraph-muted: 240 10% 55%;
+    --telegraph-accent: 335 85% 60%;
+    --telegraph-accent-2: 20 95% 62%;
+    --telegraph-accent-3: 220 90% 62%;
+
+    --gradient-app: linear-gradient(135deg,
+      hsl(335 100% 88%) 0%,
+      hsl(20 100% 88%) 35%,
+      hsl(220 100% 92%) 100%);
+    --gradient-rail: linear-gradient(180deg,
+      hsl(335 85% 66%) 0%,
+      hsl(20 95% 64%) 50%,
+      hsl(220 90% 64%) 100%);
+    --gradient-sent: linear-gradient(135deg, hsl(335 85% 62%), hsl(20 95% 62%));
+    --shadow-soft: 0 12px 40px -16px hsl(240 30% 40% / 0.18);
+    --shadow-card: 0 4px 20px -8px hsl(240 30% 40% / 0.12);
   }
 
   .dark {
-    --background: 205 15% 14%;
-    --foreground: 205 100% 98%;
-    --card: 205 16% 18%;
-    --card-foreground: 205 100% 98%;
-    --popover: 205 16% 18%;
-    --popover-foreground: 205 100% 98%;
-    --primary: 195 90% 51%;
-    --primary-foreground: 205 100% 98%;
-    --secondary: 205 35% 20%;
-    --secondary-foreground: 205 100% 98%;
-    --muted: 205 22% 35%;
-    --muted-foreground: 205 100% 98%;
-    --accent: 195 90% 51%;
-    --accent-foreground: 205 100% 98%;
-    --destructive: 353 80% 58%;
-    --destructive-foreground: 205 100% 98%;
-    --border: 205 20% 30%;
-    --input: 205 18% 22%;
-    --ring: 195 90% 51%;
-    --sidebar-background: 205 16% 18%;
-    --sidebar-foreground: 205 100% 98%;
-    --sidebar-primary: 195 90% 51%;
-    --sidebar-primary-foreground: 205 100% 98%;
-    --sidebar-accent: 195 80% 35%;
-    --sidebar-accent-foreground: 205 100% 98%;
-    --sidebar-border: 205 20% 30%;
-    --sidebar-ring: 195 90% 51%;
+    --background: 240 25% 10%;
+    --foreground: 0 0% 98%;
+    --card: 240 22% 14%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 22% 14%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 335 85% 62%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 18% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 18% 20%;
+    --muted-foreground: 240 10% 70%;
+    --accent: 20 95% 62%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 18% 22%;
+    --input: 240 18% 20%;
+    --ring: 335 85% 62%;
+    --telegraph-bg: 240 22% 14%;
+    --telegraph-card: 240 18% 18%;
+    --telegraph-border: 240 18% 24%;
+    --telegraph-text: 0 0% 98%;
+    --telegraph-muted: 240 10% 65%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
+  html, body, #root { height: 100%; }
   body {
-    min-height: 100vh;
     color: hsl(var(--foreground));
-    background-color: hsl(var(--background));
-    background-image:
-      radial-gradient(circle at top left, rgba(14,165,233,0.16), transparent 26%),
-      radial-gradient(circle at 92% 8%, rgba(59,130,246,0.18), transparent 20%),
-      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--card)) 100%);
+    background: var(--gradient-app);
     background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: cover;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   }
+  ::selection { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+}
 
-  ::selection {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground));
-  }
+@layer utilities {
+  .bg-gradient-rail { background: var(--gradient-rail); }
+  .bg-gradient-sent { background: var(--gradient-sent); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 0.5rem); }
 }
