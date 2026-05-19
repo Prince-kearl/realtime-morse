@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, ArrowLeft, Phone, Video, MoreHorizontal, Settings2 } from 'lucide-react';
 import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialog';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
@@ -16,39 +16,30 @@ interface Profile { id: string; username: string; display_name: string | null }
 interface Conversation { id: string; user_a: string; user_b: string; last_message_at: string; other?: Profile }
 interface Message { id: string; conversation_id: string; sender_id: string; morse: string; decoded: string; input_source: string; created_at: string }
 
-type ChatFilter = 'all' | 'contacts' | 'groups';
+type Tab = 'open' | 'archived';
 
-const AVATAR_EMOJIS = ['🚀', '🛰️', '🧭', '⚡', '👾', '🛸', '✨', '🌌', '💡', '🎖️', '🪐', '🔧'];
 const AVATAR_GRADIENTS = [
-  'from-[#5A54FF] via-[#9B59FF] to-[#FF80F4]',
-  'from-[#18A0FB] via-[#30CBE8] to-[#6DF2AD]',
-  'from-[#F5AF19] via-[#F05D23] to-[#FF416C]',
-  'from-[#7B61FF] via-[#A64DF7] to-[#FF6CB2]',
-  'from-[#34D399] via-[#22C55E] to-[#10B981]',
+  'from-pink-400 to-orange-400',
+  'from-blue-400 to-purple-400',
+  'from-emerald-400 to-teal-400',
+  'from-amber-400 to-rose-400',
+  'from-indigo-400 to-pink-400',
+  'from-cyan-400 to-blue-500',
 ];
 
-const GROUPS = [
-  { id: 'ops', name: 'Operator Squad', description: 'Realtime practice and feed', members: 12 },
-  { id: 'learn', name: 'Morse Learners', description: 'Beginner sessions and study', members: 24 },
-  { id: 'events', name: 'Launch Team', description: 'Live build coordination', members: 6 },
-];
-
-function getHashedIndex(value: string, length: number) {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash) % length;
+function hashIndex(value: string, length: number) {
+  let h = 0;
+  for (let i = 0; i < value.length; i++) { h = (h << 5) - h + value.charCodeAt(i); h |= 0; }
+  return Math.abs(h) % length;
 }
 
-function BitmojiAvatar({ username }: { username: string }) {
-  const emoji = AVATAR_EMOJIS[getHashedIndex(username, AVATAR_EMOJIS.length)];
-  const gradient = AVATAR_GRADIENTS[getHashedIndex(username + 'color', AVATAR_GRADIENTS.length)];
-
+function UserAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
+  const g = AVATAR_GRADIENTS[hashIndex(name, AVATAR_GRADIENTS.length)];
+  const initials = name.slice(0, 2).toUpperCase();
+  const sz = size === 'sm' ? 'h-9 w-9 text-xs' : size === 'lg' ? 'h-14 w-14 text-base' : 'h-11 w-11 text-sm';
   return (
-    <Avatar className={`bg-gradient-to-br ${gradient} text-black ring-1 ring-white/10`}>
-      <span className="text-xl">{emoji}</span>
+    <Avatar className={`${sz} bg-gradient-to-br ${g} text-white font-semibold ring-2 ring-white shadow-card`}>
+      <span className="grid place-items-center w-full h-full">{initials}</span>
     </Avatar>
   );
 }
@@ -61,18 +52,15 @@ export default function Chat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
-  const [showChatList, setShowChatList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [inputSel, setInputSel] = useState<InputSelection | null>(null);
   const [showInputDialog, setShowInputDialog] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<ChatFilter>('all');
+  const [tab, setTab] = useState<Tab>('open');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!user) navigate('/auth', { replace: true });
-  }, [user, authLoading, navigate]);
+  useEffect(() => { if (!user && !authLoading) navigate('/auth', { replace: true }); }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (!user) return;
@@ -83,71 +71,47 @@ export default function Chat() {
   useEffect(() => {
     const saved = localStorage.getItem('morse-input-selection');
     if (saved) {
-      try {
-        setInputSel(JSON.parse(saved) as InputSelection);
-      } catch {
-        localStorage.removeItem('morse-input-selection');
-      }
-    } else {
-      setShowInputDialog(true);
-    }
+      try { setInputSel(JSON.parse(saved) as InputSelection); }
+      catch { localStorage.removeItem('morse-input-selection'); setShowInputDialog(true); }
+    } else { setShowInputDialog(true); }
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    const loadProfiles = async () => {
-      const { data } = await supabase.from('profiles')
-        .select('*')
-        .neq('id', user.id)
-        .order('username', { ascending: true })
-        .limit(50);
-      setAllProfiles((data as Profile[]) ?? []);
-    };
-    loadProfiles();
+    supabase.from('profiles').select('*').neq('id', user.id).order('username').limit(50)
+      .then(({ data }) => setAllProfiles((data as Profile[]) ?? []));
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: convos } = await supabase
-        .from('conversations')
-        .select('*')
+      const { data: convos } = await supabase.from('conversations').select('*')
         .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
       if (!convos) return;
       const otherIds = convos.map(c => c.user_a === user.id ? c.user_b : c.user_a);
       const { data: profiles } = await supabase.from('profiles').select('*').in('id', otherIds);
-      const enriched = convos.map(c => ({
+      setConversations(convos.map(c => ({
         ...c,
         other: profiles?.find(p => p.id === (c.user_a === user.id ? c.user_b : c.user_a)) as Profile | undefined,
-      }));
-      setConversations(enriched);
+      })));
     };
     load();
-
     const channel = supabase.channel('conversations-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, load)
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
-    const load = async () => {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', activeId)
-        .order('created_at', { ascending: true });
-      setMessages((data as Message[]) ?? []);
-    };
-    load();
+    supabase.from('messages').select('*').eq('conversation_id', activeId).order('created_at')
+      .then(({ data }) => setMessages((data as Message[]) ?? []));
     const channel = supabase.channel(`messages-${activeId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeId}` },
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeId}` },
         (payload) => setMessages(m => [...m, payload.new as Message]))
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [activeId]);
 
@@ -157,45 +121,28 @@ export default function Chat() {
 
   useEffect(() => {
     if (!showNewChat || !searchQuery.trim() || !user) { setSearchResults([]); return; }
-    const timeout = setTimeout(async () => {
-      const { data } = await supabase.from('profiles')
-        .select('*')
-        .ilike('username', `%${searchQuery.trim()}%`)
-        .neq('id', user.id)
-        .limit(10);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from('profiles').select('*')
+        .ilike('username', `%${searchQuery.trim()}%`).neq('id', user.id).limit(10);
       setSearchResults((data as Profile[]) ?? []);
     }, 200);
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(t);
   }, [searchQuery, showNewChat, user]);
 
   const startConversation = async (other: Profile) => {
     if (!user) return;
     const [a, b] = [user.id, other.id].sort();
     const existing = conversations.find(c => c.user_a === a && c.user_b === b);
-    if (existing) {
-      setActiveId(existing.id);
-      setShowNewChat(false);
-      setShowChatList(false);
-      return;
-    }
+    if (existing) { setActiveId(existing.id); setShowNewChat(false); return; }
     const { data, error } = await supabase.from('conversations').insert({ user_a: a, user_b: b }).select().maybeSingle();
     if (error) { toast.error(error.message); return; }
-    if (data) {
-      setActiveId(data.id);
-      setShowNewChat(false);
-      setShowChatList(false);
-      setSearchQuery('');
-    }
+    if (data) { setActiveId(data.id); setShowNewChat(false); setSearchQuery(''); }
   };
 
   const sendMessage = async (morse: string, decoded: string, source: string) => {
     if (!user || !activeId) return;
     const { error } = await supabase.from('messages').insert({
-      conversation_id: activeId,
-      sender_id: user.id,
-      morse,
-      decoded,
-      input_source: source,
+      conversation_id: activeId, sender_id: user.id, morse, decoded, input_source: source,
     });
     if (error) { toast.error(error.message); return; }
     await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', activeId);
@@ -203,31 +150,21 @@ export default function Chat() {
 
   const activeConvo = conversations.find(c => c.id === activeId);
   const activeUser = activeConvo?.other;
-  const totalUsers = allProfiles.length + 1;
-  const activeChats = conversations.length;
-  const conversationsWithActivity = conversations.filter(c => c.last_message_at).length;
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter(c => c.other?.username.toLowerCase().includes(searchQuery.toLowerCase()))
     : conversations;
 
-  const filteredContacts = searchQuery.trim()
-    ? allProfiles.filter(p => p.username.toLowerCase().includes(searchQuery.toLowerCase()))
-    : allProfiles.slice(0, 8);
-
-  const tabs: { value: ChatFilter; label: string }[] = [
-    { value: 'all', label: 'All chats' },
-    { value: 'contacts', label: 'My Contacts' },
-    { value: 'groups', label: 'Groups' },
-  ];
-
   if (authLoading || !user) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center flex-1 text-slate-500">Loading…</div>
+        <div className="flex-1 grid place-items-center text-muted-foreground">Loading…</div>
       </MainLayout>
     );
   }
+
+  // Mobile: show thread view full-screen when active, else show list
+  const mobileShowThread = activeId !== null;
 
   return (
     <MainLayout>
@@ -235,242 +172,218 @@ export default function Chat() {
         open={showInputDialog}
         initial={inputSel?.source}
         onSelect={(sel) => {
-          setInputSel(sel);
-          setShowInputDialog(false);
+          setInputSel(sel); setShowInputDialog(false);
           localStorage.setItem('morse-input-selection', JSON.stringify(sel));
         }}
         onClose={inputSel ? () => setShowInputDialog(false) : undefined}
       />
 
-      <div className="flex-1 min-h-0 overflow-auto">
-        <div className="mx-auto flex min-h-full max-w-[1500px] flex-col gap-4 p-4 sm:p-6">
-          <div className="rounded-[32px] border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-sky-200/20 backdrop-blur-xl">
-            <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.5em] text-slate-400">Morse Telegraph</p>
-                <h1 className="mt-3 text-4xl font-semibold text-slate-900 leading-tight">Operators & live messaging</h1>
-                <p className="mt-4 max-w-2xl text-sm text-slate-500">
-                  Browse all account holders, open recent chats, and start messaging with a single tap. The platform now mirrors a polished operator dashboard with bitmoji-style avatars.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[24px] border border-slate-200/75 bg-slate-100/80 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Users</p>
-                  <div className="mt-3 text-2xl font-semibold text-slate-900">{totalUsers}</div>
-                </div>
-                <div className="rounded-[24px] border border-slate-200/75 bg-slate-100/80 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Chats</p>
-                  <div className="mt-3 text-2xl font-semibold text-slate-900">{activeChats}</div>
-                </div>
-                <div className="rounded-[24px] border border-slate-200/75 bg-slate-100/80 p-4">
-                  <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Live threads</p>
-                  <div className="mt-3 text-2xl font-semibold text-slate-900">{conversationsWithActivity}</div>
-                </div>
+      <div className="flex-1 min-h-0 p-3 sm:p-5 lg:p-6">
+        <div className="h-full grid gap-4 lg:grid-cols-[320px_1fr_280px] xl:grid-cols-[340px_1fr_300px]">
+
+          {/* Conversation list */}
+          <section className={`${mobileShowThread ? 'hidden lg:flex' : 'flex'} flex-col gap-3 rounded-3xl bg-white shadow-soft border border-border overflow-hidden`}>
+            <div className="p-4 pb-2 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Chat</h2>
+              <Button
+                size="sm"
+                onClick={() => setShowNewChat(s => !s)}
+                className="h-9 w-9 p-0 rounded-full bg-gradient-sent text-white shadow-card hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="px-4">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search people, documents…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10 rounded-full bg-secondary border-0"
+                />
               </div>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1.5fr)_320px]">
-              <section className="space-y-4 rounded-[28px] border border-slate-200/75 bg-white/95 p-4 shadow-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Recent chats</p>
-                    <h2 className="mt-2 text-lg font-semibold text-slate-900">Active operators</h2>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => setShowNewChat(s => !s)} className="rounded-full border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100">
-                    <Plus className="h-4 w-4 mr-1" /> New
-                  </Button>
-                </div>
+            <div className="px-4 flex gap-1 bg-secondary/60 mx-4 rounded-full p-1">
+              {(['open', 'archived'] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`flex-1 capitalize text-sm font-medium py-2 rounded-full transition ${
+                    tab === t ? 'bg-white shadow-card text-foreground' : 'text-muted-foreground'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
 
-                <div className="flex flex-wrap gap-2 rounded-full bg-slate-50 p-2">
-                  {tabs.map((tab) => (
+            <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
+              {showNewChat && (
+                <div className="m-2 rounded-2xl bg-secondary/60 p-2 space-y-2">
+                  <p className="text-xs font-semibold px-2 text-muted-foreground uppercase tracking-wider">Start a new chat</p>
+                  {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 8)).map((p) => (
                     <button
-                      key={tab.value}
-                      onClick={() => setActiveFilter(tab.value)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                        activeFilter === tab.value ? 'bg-sky-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
-                      }`}
+                      key={p.id}
+                      onClick={() => startConversation(p)}
+                      className="w-full flex items-center gap-3 rounded-xl bg-white p-2 hover:shadow-card transition"
                     >
-                      {tab.label}
+                      <UserAvatar name={p.username} size="sm" />
+                      <div className="text-left">
+                        <div className="text-sm font-semibold">@{p.username}</div>
+                        <div className="text-xs text-muted-foreground">{p.display_name || 'Operator'}</div>
+                      </div>
                     </button>
                   ))}
-                </div>
-
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    placeholder="Search operators…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-10 text-sm bg-white border-slate-200 text-slate-700"
-                  />
-                </div>
-
-                <div className="space-y-3 overflow-hidden">
-                  {activeFilter === 'all' && (
-                    filteredConversations.length === 0 ? (
-                      <p className="text-sm text-slate-500">No conversations match your search.</p>
-                    ) : (
-                      filteredConversations.slice(0, 8).map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => { setActiveId(c.id); setShowChatList(false); }}
-                          className={`group flex w-full items-center gap-3 rounded-3xl border px-4 py-3 text-left transition ${
-                            activeId === c.id ? 'border-sky-200 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                          }`}
-                        >
-                          <BitmojiAvatar username={c.other?.username ?? 'user'} />
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-slate-900">@{c.other?.username ?? '…'}</div>
-                            <p className="text-xs text-slate-500">{c.other?.display_name ?? 'Operator'}</p>
-                          </div>
-                          <span className="text-[10px] text-slate-400">{c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
-                        </button>
-                      ))
-                    )
-                  )}
-
-                  {activeFilter === 'contacts' && (
-                    filteredContacts.length === 0 ? (
-                      <p className="text-sm text-slate-500">No contacts found.</p>
-                    ) : (
-                      filteredContacts.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => startConversation(p)}
-                          className="group flex w-full items-center gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-sky-200 hover:bg-sky-50"
-                        >
-                          <BitmojiAvatar username={p.username} />
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">@{p.username}</div>
-                            <div className="text-xs text-slate-500">{p.display_name || 'Operator'}</div>
-                          </div>
-                        </button>
-                      ))
-                    )
-                  )}
-
-                  {activeFilter === 'groups' && (
-                    <div className="space-y-3">
-                      {GROUPS.map((group) => (
-                        <button
-                          key={group.id}
-                          className="group w-full rounded-3xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-sky-200 hover:bg-sky-50"
-                          onClick={() => setShowNewChat(true)}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{group.name}</div>
-                              <p className="text-xs text-slate-500">{group.description}</p>
-                            </div>
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] uppercase tracking-[0.35em] text-slate-500">{group.members} members</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                  {searchQuery.trim() && searchResults.length === 0 && (
+                    <p className="px-2 text-xs text-muted-foreground">No operators found.</p>
                   )}
                 </div>
+              )}
 
-                {showNewChat && (
-                  <div className="rounded-[28px] border border-slate-200/75 bg-slate-50 p-3">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                      <Input
-                        placeholder="Search operators…"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 h-10 text-sm bg-white border-slate-200 text-slate-700"
-                      />
-                    </div>
-                    <div className="mt-3 grid gap-3 max-h-64 overflow-y-auto">
-                      {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 8)).map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => startConversation(p)}
-                          className="group flex items-center gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-sky-200 hover:bg-sky-50"
-                        >
-                          <BitmojiAvatar username={p.username} />
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">@{p.username}</div>
-                            <div className="text-xs text-slate-500">{p.display_name || 'Operator'}</div>
-                          </div>
-                        </button>
-                      ))}
-                      {searchQuery.trim() && searchResults.length === 0 && (
-                        <p className="text-sm text-slate-500">No operators found.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-[32px] border border-slate-200/80 bg-white/95 p-5 shadow-sm">
-                {activeConvo ? (
-                  <>
-                    <div className="mb-4 flex items-center gap-4">
-                      <BitmojiAvatar username={activeUser?.username ?? 'chat'} />
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Conversation</p>
-                        <h2 className="text-xl font-semibold text-slate-900">@{activeUser?.username}</h2>
-                        <p className="text-sm text-slate-500">{activeUser?.display_name ?? 'Messaging operator'}</p>
-                      </div>
-                    </div>
-                    <div ref={scrollRef} className="max-h-[420px] overflow-y-auto space-y-3 pb-3">
-                      {messages.length === 0 ? (
-                        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                          Start the conversation by tapping the key or sending a message.
+              {filteredConversations.length === 0 && !showNewChat ? (
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  No chats yet. Tap <span className="inline-block align-middle"><Plus className="inline h-3 w-3" /></span> to start one.
+                </div>
+              ) : (
+                filteredConversations.map((c) => {
+                  const active = activeId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setActiveId(c.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition text-left ${
+                        active ? 'bg-gradient-to-r from-pink-50 to-orange-50 shadow-card' : 'hover:bg-secondary/60'
+                      }`}
+                    >
+                      <UserAvatar name={c.other?.username ?? 'user'} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-semibold text-sm truncate">{c.other?.display_name || `@${c.other?.username}`}</div>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
                         </div>
-                      ) : (
-                        messages.map((m) => (
-                          <ChatBubble
-                            key={m.id}
-                            morse={m.morse}
-                            decoded={m.decoded}
-                            isOwn={m.sender_id === user.id}
-                            timestamp={m.created_at}
-                            inputSource={m.input_source}
-                          />
-                        ))
-                      )}
-                    </div>
-                    {inputSel && (
-                      <div className="mt-4">
-                        <MessageComposer selection={inputSel} onChangeInput={() => setShowInputDialog(true)} onSend={sendMessage} />
+                        <div className="text-xs text-muted-foreground truncate">@{c.other?.username}</div>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[32px] border border-slate-200/80 bg-slate-50 p-6 text-center">
-                    <p className="text-sm text-slate-500">Choose an operator or recent chat to open the live interface.</p>
-                    <Button variant="secondary" className="mt-4 rounded-full bg-sky-600 px-5 py-2 text-white hover:bg-sky-700" onClick={() => setShowChatList(true)}>
-                      Browse chats
-                    </Button>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
+          {/* Thread */}
+          <section className={`${mobileShowThread ? 'flex' : 'hidden lg:flex'} flex-col rounded-3xl bg-white shadow-soft border border-border overflow-hidden min-h-0`}>
+            {activeConvo ? (
+              <>
+                <div className="px-4 sm:px-5 py-3 border-b border-border flex items-center gap-3">
+                  <button
+                    onClick={() => setActiveId(null)}
+                    className="lg:hidden grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <UserAvatar name={activeUser?.username ?? 'chat'} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{activeUser?.display_name || `@${activeUser?.username}`}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5 align-middle"></span>
+                      Active now
+                    </div>
+                  </div>
+                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
+                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
+                  <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
+                </div>
+
+                <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 bg-gradient-to-b from-white via-secondary/30 to-white">
+                  {messages.length === 0 ? (
+                    <div className="h-full grid place-items-center text-center text-sm text-muted-foreground">
+                      <div>
+                        <p>No messages yet.</p>
+                        <p className="mt-1 text-xs">Tap the key, talk, or type below to begin.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    messages.map((m) => (
+                      <ChatBubble
+                        key={m.id}
+                        morse={m.morse}
+                        decoded={m.decoded}
+                        isOwn={m.sender_id === user.id}
+                        timestamp={m.created_at}
+                        inputSource={m.input_source}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {inputSel && (
+                  <div className="p-3 sm:p-4 border-t border-border bg-white">
+                    <MessageComposer
+                      selection={inputSel}
+                      onChangeInput={() => setShowInputDialog(true)}
+                      onSend={sendMessage}
+                    />
                   </div>
                 )}
-              </section>
+              </>
+            ) : (
+              <div className="flex-1 grid place-items-center p-8 text-center">
+                <div>
+                  <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-gradient-sent grid place-items-center text-white shadow-soft">
+                    <Plus className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Pick a conversation</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                    Select an operator from the list, or start a new chat to begin sending Morse signals.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
 
-              <section className="rounded-[24px] border border-slate-200/75 bg-white/95 p-5 shadow-sm">
-                <div className="mb-5">
-                  <p className="text-[10px] uppercase tracking-[0.55em] text-slate-400">Statistics</p>
-                  <h2 className="mt-3 text-xl font-semibold text-slate-900">Workspace overview</h2>
-                </div>
-                <div className="grid gap-3">
-                  <div className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                    <p className="text-[10px] uppercase tracking-[0.55em] text-slate-500">Engagement</p>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900">{Math.min(activeChats * 5 + 30, 99)}%</p>
-                    <p className="mt-2 text-sm text-slate-500">Live operator traffic is healthy.</p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                    <p className="text-[10px] uppercase tracking-[0.55em] text-slate-500">Ready operators</p>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900">{allProfiles.length}</p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                    <p className="text-[10px] uppercase tracking-[0.55em] text-slate-500">Selected input</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{inputSel ? inputSel.source : 'None'}</p>
+          {/* Right info panel */}
+          <aside className="hidden lg:flex flex-col gap-4 rounded-3xl bg-white shadow-soft border border-border p-5 overflow-y-auto">
+            {activeUser ? (
+              <>
+                <div className="flex flex-col items-center text-center gap-3">
+                  <UserAvatar name={activeUser.username} size="lg" />
+                  <div>
+                    <div className="font-semibold">{activeUser.display_name || `@${activeUser.username}`}</div>
+                    <div className="text-xs text-muted-foreground">@{activeUser.username}</div>
                   </div>
                 </div>
-              </section>
-            </div>
-          </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                    <Phone className="h-4 w-4" />
+                  </button>
+                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                    <Video className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setShowInputDialog(true)}
+                    className="rounded-2xl bg-gradient-sent text-white py-3 grid place-items-center hover:opacity-90 transition"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="rounded-2xl bg-secondary/60 p-4 text-xs space-y-2">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Messages</span><span className="font-semibold">{messages.length}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Input</span><span className="font-semibold uppercase">{inputSel?.source ?? '—'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Started</span><span className="font-semibold">{activeConvo ? new Date(activeConvo.last_message_at).toLocaleDateString() : '—'}</span></div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground text-center">
+                <p className="font-semibold text-foreground mb-2">Hello {profile?.display_name || profile?.username || 'operator'} 👋</p>
+                <p>Select a conversation to see contact details, shared files, and recent activity here.</p>
+              </div>
+            )}
+          </aside>
         </div>
       </div>
     </MainLayout>
