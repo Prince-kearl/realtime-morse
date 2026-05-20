@@ -421,10 +421,10 @@ export default function Chat() {
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                  <button onClick={() => startCall('voice')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
                     <Phone className="h-4 w-4" />
                   </button>
-                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                  <button onClick={() => startCall('video')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
                     <Video className="h-4 w-4" />
                   </button>
                   <button
