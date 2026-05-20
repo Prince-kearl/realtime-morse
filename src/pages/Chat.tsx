@@ -164,7 +164,53 @@ export default function Chat() {
     await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', activeId);
   };
 
-  const activeConvo = conversations.find(c => c.id === activeId);
+  // Listen for incoming calls across all the user's conversations.
+  useEffect(() => {
+    if (!user || conversations.length === 0) return;
+    const channels = conversations.map((c) => {
+      const peer = c.other;
+      const ch = supabase.channel(`call:${c.id}`, { config: { broadcast: { self: false } } });
+      ch.on('broadcast', { event: 'signal' }, ({ payload }) => {
+        if (!payload || payload.to !== user.id) return;
+        if (payload.type === 'offer' && !call && !incoming) {
+          setIncoming({
+            conversationId: c.id,
+            peerId: payload.from,
+            peerName: peer?.display_name || peer?.username || 'Unknown',
+            mode: (payload.payload?.mode as CallMode) ?? 'voice',
+            offer: payload.payload?.sdp,
+          });
+        }
+      });
+      ch.subscribe();
+      return ch;
+    });
+    return () => { channels.forEach((c) => supabase.removeChannel(c)); };
+  }, [user, conversations, call, incoming]);
+
+  const startCall = (mode: CallMode) => {
+    if (!activeConvo || !activeUser || !user) return;
+    setCall({
+      conversationId: activeConvo.id,
+      peerId: activeUser.id,
+      peerName: activeUser.display_name || activeUser.username,
+      mode,
+      role: 'caller',
+    });
+  };
+
+  const acceptIncoming = () => {
+    if (!incoming) return;
+    setCall({
+      conversationId: incoming.conversationId,
+      peerId: incoming.peerId,
+      peerName: incoming.peerName,
+      mode: incoming.mode,
+      role: 'callee',
+      remoteOffer: incoming.offer,
+    });
+    setIncoming(null);
+  };
   const activeUser = activeConvo?.other;
 
   const filteredConversations = searchQuery.trim()
