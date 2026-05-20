@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   MessageSquare,
   Zap,
@@ -11,6 +12,7 @@ import {
   Radio,
   History,
   BarChart3,
+  MoreHorizontal,
 } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -32,18 +34,28 @@ const mobileNav = [
   { path: '/chat', icon: MessageSquare, label: 'Chat' },
   { path: '/translator', icon: Zap, label: 'Translate' },
   { path: '/tools', icon: BarChart3, label: 'Tools' },
+];
+
+const mobileMoreItems = [
+  { path: '/learn', icon: BookOpen, label: 'Learn' },
+  { path: '/history', icon: History, label: 'History' },
+  { path: '/reference', icon: Radio, label: 'Reference' },
   { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth', { replace: true });
   };
+
+  const moreActive = mobileMoreItems.some((i) => i.path === location.pathname);
 
   return (
     <div className="min-h-screen flex">
@@ -117,6 +129,46 @@ export function MainLayout({ children }: MainLayoutProps) {
               </button>
             );
           })}
+
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetTrigger asChild>
+              <button
+                className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
+                  moreActive ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                <div className={`grid h-9 w-9 place-items-center rounded-xl ${moreActive ? 'bg-gradient-sent text-white' : ''}`}>
+                  <MoreHorizontal className="h-4 w-4" />
+                </div>
+                <span>More</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-3xl">
+              <SheetHeader>
+                <SheetTitle>More</SheetTitle>
+              </SheetHeader>
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                {mobileMoreItems.map(({ path, icon: Icon, label }) => {
+                  const active = location.pathname === path;
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => {
+                        navigate(path);
+                        setMoreOpen(false);
+                      }}
+                      className={`flex flex-col items-center gap-2 rounded-2xl p-4 transition ${
+                        active ? 'bg-gradient-sent text-white' : 'bg-secondary hover:bg-secondary/70'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-xs font-medium">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>
