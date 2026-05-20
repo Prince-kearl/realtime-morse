@@ -10,6 +10,7 @@ import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialo
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
 import { MainLayout } from '@/components/MainLayout';
+import { CallDialog, CallMode } from '@/components/chat/CallDialog';
 import { toast } from 'sonner';
 
 interface Profile { id: string; username: string; display_name: string | null }
@@ -59,6 +60,21 @@ export default function Chat() {
   const [showInputDialog, setShowInputDialog] = useState(false);
   const [tab, setTab] = useState<Tab>('open');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [call, setCall] = useState<null | {
+    conversationId: string;
+    peerId: string;
+    peerName: string;
+    mode: CallMode;
+    role: 'caller' | 'callee';
+    remoteOffer?: RTCSessionDescriptionInit;
+  }>(null);
+  const [incoming, setIncoming] = useState<null | {
+    conversationId: string;
+    peerId: string;
+    peerName: string;
+    mode: CallMode;
+    offer: RTCSessionDescriptionInit;
+  }>(null);
 
   useEffect(() => { if (!user && !authLoading) navigate('/auth', { replace: true }); }, [user, authLoading, navigate]);
 
@@ -148,6 +164,53 @@ export default function Chat() {
     await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', activeId);
   };
 
+  // Listen for incoming calls across all the user's conversations.
+  useEffect(() => {
+    if (!user || conversations.length === 0) return;
+    const channels = conversations.map((c) => {
+      const peer = c.other;
+      const ch = supabase.channel(`call:${c.id}`, { config: { broadcast: { self: false } } });
+      ch.on('broadcast', { event: 'signal' }, ({ payload }) => {
+        if (!payload || payload.to !== user.id) return;
+        if (payload.type === 'offer' && !call && !incoming) {
+          setIncoming({
+            conversationId: c.id,
+            peerId: payload.from,
+            peerName: peer?.display_name || peer?.username || 'Unknown',
+            mode: (payload.payload?.mode as CallMode) ?? 'voice',
+            offer: payload.payload?.sdp,
+          });
+        }
+      });
+      ch.subscribe();
+      return ch;
+    });
+    return () => { channels.forEach((c) => supabase.removeChannel(c)); };
+  }, [user, conversations, call, incoming]);
+
+  const startCall = (mode: CallMode) => {
+    if (!activeConvo || !activeUser || !user) return;
+    setCall({
+      conversationId: activeConvo.id,
+      peerId: activeUser.id,
+      peerName: activeUser.display_name || activeUser.username,
+      mode,
+      role: 'caller',
+    });
+  };
+
+  const acceptIncoming = () => {
+    if (!incoming) return;
+    setCall({
+      conversationId: incoming.conversationId,
+      peerId: incoming.peerId,
+      peerName: incoming.peerName,
+      mode: incoming.mode,
+      role: 'callee',
+      remoteOffer: incoming.offer,
+    });
+    setIncoming(null);
+  };
   const activeConvo = conversations.find(c => c.id === activeId);
   const activeUser = activeConvo?.other;
 
@@ -294,8 +357,8 @@ export default function Chat() {
                       Active now
                     </div>
                   </div>
-                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
-                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
+                  <button onClick={() => startCall('voice')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
+                  <button onClick={() => startCall('video')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
                   <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
                 </div>
 
@@ -358,10 +421,10 @@ export default function Chat() {
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                  <button onClick={() => startCall('voice')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
                     <Phone className="h-4 w-4" />
                   </button>
-                  <button className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
+                  <button onClick={() => startCall('video')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
                     <Video className="h-4 w-4" />
                   </button>
                   <button
@@ -386,6 +449,38 @@ export default function Chat() {
           </aside>
         </div>
       </div>
+
+      {call && (
+        <CallDialog
+          open
+          conversationId={call.conversationId}
+          selfId={user.id}
+          peerId={call.peerId}
+          peerName={call.peerName}
+          mode={call.mode}
+          role={call.role}
+          remoteOffer={call.remoteOffer}
+          onClose={() => setCall(null)}
+        />
+      )}
+
+      {incoming && !call && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-white shadow-soft border border-border p-4 flex items-center gap-3 max-w-sm w-[90%]">
+          <div className="h-10 w-10 rounded-full bg-gradient-sent grid place-items-center text-white">
+            {incoming.mode === 'video' ? <Video className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold truncate">{incoming.peerName}</div>
+            <div className="text-xs text-muted-foreground capitalize">Incoming {incoming.mode} call</div>
+          </div>
+          <button onClick={() => setIncoming(null)} className="grid h-9 w-9 place-items-center rounded-full bg-red-500 text-white">
+            <ArrowLeft className="h-4 w-4 rotate-180" />
+          </button>
+          <button onClick={acceptIncoming} className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white">
+            <Phone className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </MainLayout>
   );
 }
