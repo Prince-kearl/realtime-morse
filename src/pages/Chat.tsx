@@ -357,8 +357,8 @@ export default function Chat() {
                       Active now
                     </div>
                   </div>
-                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
-                  <button className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
+                  <button onClick={() => startCall('voice')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
+                  <button onClick={() => startCall('video')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
                   <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
                 </div>
 
