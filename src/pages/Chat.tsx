@@ -449,6 +449,38 @@ export default function Chat() {
           </aside>
         </div>
       </div>
+
+      {call && (
+        <CallDialog
+          open
+          conversationId={call.conversationId}
+          selfId={user.id}
+          peerId={call.peerId}
+          peerName={call.peerName}
+          mode={call.mode}
+          role={call.role}
+          remoteOffer={call.remoteOffer}
+          onClose={() => setCall(null)}
+        />
+      )}
+
+      {incoming && !call && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-white shadow-soft border border-border p-4 flex items-center gap-3 max-w-sm w-[90%]">
+          <div className="h-10 w-10 rounded-full bg-gradient-sent grid place-items-center text-white">
+            {incoming.mode === 'video' ? <Video className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold truncate">{incoming.peerName}</div>
+            <div className="text-xs text-muted-foreground capitalize">Incoming {incoming.mode} call</div>
+          </div>
+          <button onClick={() => setIncoming(null)} className="grid h-9 w-9 place-items-center rounded-full bg-red-500 text-white">
+            <ArrowLeft className="h-4 w-4 rotate-180" />
+          </button>
+          <button onClick={acceptIncoming} className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white">
+            <Phone className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </MainLayout>
   );
 }
