@@ -211,6 +211,7 @@ export default function Chat() {
     });
     setIncoming(null);
   };
+  const activeConvo = conversations.find(c => c.id === activeId);
   const activeUser = activeConvo?.other;
 
   const filteredConversations = searchQuery.trim()
