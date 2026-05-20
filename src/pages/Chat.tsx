@@ -10,6 +10,7 @@ import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialo
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
 import { MainLayout } from '@/components/MainLayout';
+import { CallDialog, CallMode } from '@/components/chat/CallDialog';
 import { toast } from 'sonner';
 
 interface Profile { id: string; username: string; display_name: string | null }
