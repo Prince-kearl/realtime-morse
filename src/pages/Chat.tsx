@@ -60,6 +60,21 @@ export default function Chat() {
   const [showInputDialog, setShowInputDialog] = useState(false);
   const [tab, setTab] = useState<Tab>('open');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [call, setCall] = useState<null | {
+    conversationId: string;
+    peerId: string;
+    peerName: string;
+    mode: CallMode;
+    role: 'caller' | 'callee';
+    remoteOffer?: RTCSessionDescriptionInit;
+  }>(null);
+  const [incoming, setIncoming] = useState<null | {
+    conversationId: string;
+    peerId: string;
+    peerName: string;
+    mode: CallMode;
+    offer: RTCSessionDescriptionInit;
+  }>(null);
 
   useEffect(() => { if (!user && !authLoading) navigate('/auth', { replace: true }); }, [user, authLoading, navigate]);
 
