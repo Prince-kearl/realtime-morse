@@ -2,10 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
-import { Plus, Search, ArrowLeft, Phone, Video, MoreHorizontal, Settings2 } from 'lucide-react';
+import { MessageSquarePlus, Search, ArrowLeft, Phone, Video, MoreVertical } from 'lucide-react';
 import { InputSourceDialog, InputSelection } from '@/components/InputSourceDialog';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
@@ -17,15 +16,9 @@ interface Profile { id: string; username: string; display_name: string | null }
 interface Conversation { id: string; user_a: string; user_b: string; last_message_at: string; other?: Profile }
 interface Message { id: string; conversation_id: string; sender_id: string; morse: string; decoded: string; input_source: string; created_at: string }
 
-type Tab = 'open' | 'archived';
-
-const AVATAR_GRADIENTS = [
-  'from-pink-400 to-orange-400',
-  'from-blue-400 to-purple-400',
-  'from-emerald-400 to-teal-400',
-  'from-amber-400 to-rose-400',
-  'from-indigo-400 to-pink-400',
-  'from-cyan-400 to-blue-500',
+const AVATAR_COLORS = [
+  'bg-emerald-500', 'bg-sky-500', 'bg-violet-500',
+  'bg-amber-500', 'bg-rose-500', 'bg-teal-500', 'bg-indigo-500',
 ];
 
 function hashIndex(value: string, length: number) {
@@ -35,11 +28,11 @@ function hashIndex(value: string, length: number) {
 }
 
 function UserAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const g = AVATAR_GRADIENTS[hashIndex(name, AVATAR_GRADIENTS.length)];
+  const c = AVATAR_COLORS[hashIndex(name, AVATAR_COLORS.length)];
   const initials = name.slice(0, 2).toUpperCase();
-  const sz = size === 'sm' ? 'h-9 w-9 text-xs' : size === 'lg' ? 'h-14 w-14 text-base' : 'h-11 w-11 text-sm';
+  const sz = size === 'sm' ? 'h-9 w-9 text-xs' : size === 'lg' ? 'h-14 w-14 text-base' : 'h-12 w-12 text-sm';
   return (
-    <Avatar className={`${sz} bg-gradient-to-br ${g} text-white font-semibold ring-2 ring-white shadow-card`}>
+    <Avatar className={`${sz} ${c} text-white font-semibold`}>
       <span className="grid place-items-center w-full h-full">{initials}</span>
     </Avatar>
   );
@@ -58,7 +51,6 @@ export default function Chat() {
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [inputSel, setInputSel] = useState<InputSelection | null>(null);
   const [showInputDialog, setShowInputDialog] = useState(false);
-  const [tab, setTab] = useState<Tab>('open');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [call, setCall] = useState<null | {
     conversationId: string;
@@ -164,7 +156,6 @@ export default function Chat() {
     await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', activeId);
   };
 
-  // Listen for incoming calls across all the user's conversations.
   useEffect(() => {
     if (!user || conversations.length === 0) return;
     const channels = conversations.map((c) => {
@@ -226,7 +217,6 @@ export default function Chat() {
     );
   }
 
-  // Mobile: show thread view full-screen when active, else show list
   const mobileShowThread = activeId !== null;
 
   return (
@@ -241,213 +231,167 @@ export default function Chat() {
         onClose={inputSel ? () => setShowInputDialog(false) : undefined}
       />
 
-      <div className="flex-1 min-h-0 p-3 sm:p-5 lg:p-6">
-        <div className="h-full grid gap-4 lg:grid-cols-[320px_1fr_280px] xl:grid-cols-[340px_1fr_300px]">
+      <div className="flex-1 min-h-0 grid md:grid-cols-[360px_1fr] lg:grid-cols-[400px_1fr]">
 
-          {/* Conversation list */}
-          <section className={`${mobileShowThread ? 'hidden lg:flex' : 'flex'} flex-col gap-3 rounded-3xl bg-white shadow-soft border border-border overflow-hidden`}>
-            <div className="p-4 pb-2 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Chat</h2>
-              <Button
-                size="sm"
+        {/* Conversation list */}
+        <section className={`${mobileShowThread ? 'hidden md:flex' : 'flex'} flex-col bg-card border-r border-border min-h-0`}>
+          {/* List header */}
+          <div className="bg-wa-header px-4 py-3 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Chats</h2>
+            <div className="flex items-center gap-1">
+              <button
                 onClick={() => setShowNewChat(s => !s)}
-                className="h-9 w-9 p-0 rounded-full bg-gradient-sent text-white shadow-card hover:opacity-90"
+                title="New chat"
+                className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"
               >
-                <Plus className="h-4 w-4" />
-              </Button>
+                <MessageSquarePlus className="h-5 w-5" />
+              </button>
+              <button title="More" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10">
+                <MoreVertical className="h-5 w-5" />
+              </button>
             </div>
+          </div>
 
-            <div className="px-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search people, documents…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 rounded-full bg-secondary border-0"
-                />
-              </div>
+          {/* Search */}
+          <div className="p-2 bg-card border-b border-border">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search or start new chat"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-9 rounded-full bg-secondary border-0 text-sm"
+              />
             </div>
+          </div>
 
-            <div className="px-4 flex gap-1 bg-secondary/60 mx-4 rounded-full p-1">
-              {(['open', 'archived'] as Tab[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`flex-1 capitalize text-sm font-medium py-2 rounded-full transition ${
-                    tab === t ? 'bg-white shadow-card text-foreground' : 'text-muted-foreground'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
-              {showNewChat && (
-                <div className="m-2 rounded-2xl bg-secondary/60 p-2 space-y-2">
-                  <p className="text-xs font-semibold px-2 text-muted-foreground uppercase tracking-wider">Start a new chat</p>
-                  {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 8)).map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => startConversation(p)}
-                      className="w-full flex items-center gap-3 rounded-xl bg-white p-2 hover:shadow-card transition"
-                    >
-                      <UserAvatar name={p.username} size="sm" />
-                      <div className="text-left">
-                        <div className="text-sm font-semibold">@{p.username}</div>
-                        <div className="text-xs text-muted-foreground">{p.display_name || 'Operator'}</div>
-                      </div>
-                    </button>
-                  ))}
-                  {searchQuery.trim() && searchResults.length === 0 && (
-                    <p className="px-2 text-xs text-muted-foreground">No operators found.</p>
-                  )}
-                </div>
-              )}
-
-              {filteredConversations.length === 0 && !showNewChat ? (
-                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No chats yet. Tap <span className="inline-block align-middle"><Plus className="inline h-3 w-3" /></span> to start one.
-                </div>
-              ) : (
-                filteredConversations.map((c) => {
-                  const active = activeId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setActiveId(c.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition text-left ${
-                        active ? 'bg-gradient-to-r from-pink-50 to-orange-50 shadow-card' : 'hover:bg-secondary/60'
-                      }`}
-                    >
-                      <UserAvatar name={c.other?.username ?? 'user'} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="font-semibold text-sm truncate">{c.other?.display_name || `@${c.other?.username}`}</div>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">@{c.other?.username}</div>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* Thread */}
-          <section className={`${mobileShowThread ? 'flex' : 'hidden lg:flex'} flex-col rounded-3xl bg-white shadow-soft border border-border overflow-hidden min-h-0`}>
-            {activeConvo ? (
-              <>
-                <div className="px-4 sm:px-5 py-3 border-b border-border flex items-center gap-3">
+          <div className="flex-1 overflow-y-auto">
+            {showNewChat && (
+              <div className="border-b border-border bg-secondary/40">
+                <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Start new chat</p>
+                {(searchQuery.trim() ? searchResults : allProfiles.slice(0, 8)).map((p) => (
                   <button
-                    onClick={() => setActiveId(null)}
-                    className="lg:hidden grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"
+                    key={p.id}
+                    onClick={() => startConversation(p)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--wa-list-hover))] transition text-left"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <UserAvatar name={p.username} size="sm" />
+                    <div>
+                      <div className="text-sm font-medium">{p.display_name || `@${p.username}`}</div>
+                      <div className="text-xs text-muted-foreground">@{p.username}</div>
+                    </div>
                   </button>
-                  <UserAvatar name={activeUser?.username ?? 'chat'} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{activeUser?.display_name || `@${activeUser?.username}`}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5 align-middle"></span>
-                      Active now
-                    </div>
-                  </div>
-                  <button onClick={() => startCall('voice')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Phone className="h-4 w-4" /></button>
-                  <button onClick={() => startCall('video')} className="hidden sm:grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><Video className="h-4 w-4" /></button>
-                  <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
-                </div>
-
-                <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 bg-gradient-to-b from-white via-secondary/30 to-white">
-                  {messages.length === 0 ? (
-                    <div className="h-full grid place-items-center text-center text-sm text-muted-foreground">
-                      <div>
-                        <p>No messages yet.</p>
-                        <p className="mt-1 text-xs">Tap the key, talk, or type below to begin.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    messages.map((m) => (
-                      <ChatBubble
-                        key={m.id}
-                        morse={m.morse}
-                        decoded={m.decoded}
-                        isOwn={m.sender_id === user.id}
-                        timestamp={m.created_at}
-                        inputSource={m.input_source}
-                      />
-                    ))
-                  )}
-                </div>
-
-                {inputSel && (
-                  <div className="p-3 sm:p-4 border-t border-border bg-white">
-                    <MessageComposer
-                      selection={inputSel}
-                      onChangeInput={() => setShowInputDialog(true)}
-                      onSend={sendMessage}
-                    />
-                  </div>
+                ))}
+                {searchQuery.trim() && searchResults.length === 0 && (
+                  <p className="px-4 py-3 text-xs text-muted-foreground">No operators found.</p>
                 )}
-              </>
-            ) : (
-              <div className="flex-1 grid place-items-center p-8 text-center">
-                <div>
-                  <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-gradient-sent grid place-items-center text-white shadow-soft">
-                    <Plus className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-lg font-semibold">Pick a conversation</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                    Select an operator from the list, or start a new chat to begin sending Morse signals.
-                  </p>
-                </div>
               </div>
             )}
-          </section>
 
-          {/* Right info panel */}
-          <aside className="hidden lg:flex flex-col gap-4 rounded-3xl bg-white shadow-soft border border-border p-5 overflow-y-auto">
-            {activeUser ? (
-              <>
-                <div className="flex flex-col items-center text-center gap-3">
-                  <UserAvatar name={activeUser.username} size="lg" />
-                  <div>
-                    <div className="font-semibold">{activeUser.display_name || `@${activeUser.username}`}</div>
-                    <div className="text-xs text-muted-foreground">@{activeUser.username}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button onClick={() => startCall('voice')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
-                    <Phone className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => startCall('video')} className="rounded-2xl bg-secondary py-3 grid place-items-center hover:bg-secondary/70 transition">
-                    <Video className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setShowInputDialog(true)}
-                    className="rounded-2xl bg-gradient-sent text-white py-3 grid place-items-center hover:opacity-90 transition"
-                  >
-                    <Settings2 className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="rounded-2xl bg-secondary/60 p-4 text-xs space-y-2">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Messages</span><span className="font-semibold">{messages.length}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Input</span><span className="font-semibold uppercase">{inputSel?.source ?? '—'}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Started</span><span className="font-semibold">{activeConvo ? new Date(activeConvo.last_message_at).toLocaleDateString() : '—'}</span></div>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-muted-foreground text-center">
-                <p className="font-semibold text-foreground mb-2">Hello {profile?.display_name || profile?.username || 'operator'} 👋</p>
-                <p>Select a conversation to see contact details, shared files, and recent activity here.</p>
+            {filteredConversations.length === 0 && !showNewChat ? (
+              <div className="px-6 py-16 text-center text-sm text-muted-foreground">
+                No chats yet. Tap the new-chat icon to start one.
               </div>
+            ) : (
+              filteredConversations.map((c) => {
+                const active = activeId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setActiveId(c.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 transition text-left border-b border-border/60 ${
+                      active ? 'bg-[hsl(var(--wa-list-active))]' : 'hover:bg-[hsl(var(--wa-list-hover))]'
+                    }`}
+                  >
+                    <UserAvatar name={c.other?.username ?? 'user'} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-medium text-[15px] truncate">{c.other?.display_name || `@${c.other?.username}`}</div>
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          {c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      <div className="text-[13px] text-muted-foreground truncate">@{c.other?.username}</div>
+                    </div>
+                  </button>
+                );
+              })
             )}
-          </aside>
-        </div>
+          </div>
+        </section>
+
+        {/* Thread */}
+        <section className={`${mobileShowThread ? 'flex' : 'hidden md:flex'} flex-col min-h-0`}>
+          {activeConvo ? (
+            <>
+              {/* Thread header */}
+              <div className="bg-wa-header px-3 sm:px-4 py-2.5 flex items-center gap-3">
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="md:hidden grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <UserAvatar name={activeUser?.username ?? 'chat'} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{activeUser?.display_name || `@${activeUser?.username}`}</div>
+                  <div className="text-[11px] opacity-80 truncate">online</div>
+                </div>
+                <button onClick={() => startCall('video')} title="Video call" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"><Video className="h-5 w-5" /></button>
+                <button onClick={() => startCall('voice')} title="Voice call" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"><Phone className="h-5 w-5" /></button>
+                <button title="More" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"><MoreVertical className="h-5 w-5" /></button>
+              </div>
+
+              {/* Messages */}
+              <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto py-3 px-2 sm:px-6 bg-wa-chat">
+                {messages.length === 0 ? (
+                  <div className="h-full grid place-items-center text-center text-sm text-muted-foreground">
+                    <div className="bg-card/80 backdrop-blur rounded-lg px-5 py-4 shadow-bubble">
+                      <p>No messages yet.</p>
+                      <p className="mt-1 text-xs">Tap the key, talk, or type below to begin.</p>
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((m) => (
+                    <ChatBubble
+                      key={m.id}
+                      morse={m.morse}
+                      decoded={m.decoded}
+                      isOwn={m.sender_id === user.id}
+                      timestamp={m.created_at}
+                      inputSource={m.input_source}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Composer */}
+              {inputSel && (
+                <div className="px-2 sm:px-4 py-2 bg-secondary border-t border-border">
+                  <MessageComposer
+                    selection={inputSel}
+                    onChangeInput={() => setShowInputDialog(true)}
+                    onSend={sendMessage}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex-1 grid place-items-center p-8 text-center bg-wa-chat">
+              <div className="max-w-sm">
+                <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-primary grid place-items-center text-primary-foreground shadow-soft">
+                  <MessageSquarePlus className="h-9 w-9" />
+                </div>
+                <h3 className="text-lg font-semibold">
+                  Welcome{profile?.display_name ? `, ${profile.display_name}` : ''}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select a chat or start a new conversation to begin sending Morse signals end-to-end.
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
       {call && (
@@ -465,18 +409,18 @@ export default function Chat() {
       )}
 
       {incoming && !call && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-white shadow-soft border border-border p-4 flex items-center gap-3 max-w-sm w-[90%]">
-          <div className="h-10 w-10 rounded-full bg-gradient-sent grid place-items-center text-white">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-card shadow-soft border border-border p-4 flex items-center gap-3 max-w-sm w-[90%]">
+          <div className="h-10 w-10 rounded-full bg-primary grid place-items-center text-primary-foreground">
             {incoming.mode === 'video' ? <Video className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold truncate">{incoming.peerName}</div>
             <div className="text-xs text-muted-foreground capitalize">Incoming {incoming.mode} call</div>
           </div>
-          <button onClick={() => setIncoming(null)} className="grid h-9 w-9 place-items-center rounded-full bg-red-500 text-white">
+          <button onClick={() => setIncoming(null)} className="grid h-9 w-9 place-items-center rounded-full bg-destructive text-destructive-foreground">
             <ArrowLeft className="h-4 w-4 rotate-180" />
           </button>
-          <button onClick={acceptIncoming} className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500 text-white">
+          <button onClick={acceptIncoming} className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
             <Phone className="h-4 w-4" />
           </button>
         </div>

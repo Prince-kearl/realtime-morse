@@ -4,84 +4,84 @@
 
 @layer base {
   :root {
-    --background: 320 100% 99%;
-    --foreground: 240 25% 16%;
+    /* WhatsApp light theme */
+    --background: 0 0% 96%;
+    --foreground: 200 7% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 240 25% 16%;
+    --card-foreground: 200 7% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 25% 16%;
-    --primary: 335 85% 60%;
+    --popover-foreground: 200 7% 13%;
+    --primary: 168 100% 33%;            /* WA teal-green #00a884 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 96%;
-    --secondary-foreground: 240 25% 20%;
-    --muted: 240 20% 96%;
-    --muted-foreground: 240 10% 50%;
-    --accent: 20 95% 62%;
+    --secondary: 180 6% 94%;
+    --secondary-foreground: 200 7% 18%;
+    --muted: 180 6% 94%;
+    --muted-foreground: 200 5% 45%;
+    --accent: 168 100% 33%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 80% 60%;
+    --destructive: 4 90% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 25% 92%;
-    --input: 240 25% 96%;
-    --ring: 335 85% 60%;
-    --radius: 1rem;
+    --border: 180 4% 88%;
+    --input: 180 6% 96%;
+    --ring: 168 100% 33%;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 25% 16%;
-    --sidebar-primary: 335 85% 60%;
+    --sidebar-foreground: 200 7% 13%;
+    --sidebar-primary: 168 100% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 20% 96%;
-    --sidebar-accent-foreground: 240 25% 16%;
-    --sidebar-border: 240 25% 92%;
-    --sidebar-ring: 335 85% 60%;
+    --sidebar-accent: 180 6% 94%;
+    --sidebar-accent-foreground: 200 7% 13%;
+    --sidebar-border: 180 4% 88%;
+    --sidebar-ring: 168 100% 33%;
 
-    /* Telegraph theme — vibrant gradient style */
-    --telegraph-bg: 0 0% 100%;
-    --telegraph-card: 240 20% 98%;
-    --telegraph-border: 240 25% 92%;
-    --telegraph-text: 240 25% 16%;
-    --telegraph-muted: 240 10% 55%;
-    --telegraph-accent: 335 85% 60%;
-    --telegraph-accent-2: 20 95% 62%;
-    --telegraph-accent-3: 220 90% 62%;
+    /* WhatsApp tokens */
+    --wa-header: 174 39% 24%;           /* dark teal */
+    --wa-header-foreground: 0 0% 100%;
+    --wa-rail: 174 35% 19%;
+    --wa-chat-bg: 39 30% 91%;           /* warm cream like WA wallpaper */
+    --wa-bubble-out: 122 56% 88%;       /* #d9fdd3 */
+    --wa-bubble-in: 0 0% 100%;
+    --wa-list-active: 180 8% 92%;
+    --wa-list-hover: 180 6% 96%;
+    --wa-tick: 200 100% 47%;            /* blue read tick */
+    --wa-divider: 180 4% 86%;
 
-    --gradient-app: linear-gradient(135deg,
-      hsl(335 100% 88%) 0%,
-      hsl(20 100% 88%) 35%,
-      hsl(220 100% 92%) 100%);
-    --gradient-rail: linear-gradient(180deg,
-      hsl(335 85% 66%) 0%,
-      hsl(20 95% 64%) 50%,
-      hsl(220 90% 64%) 100%);
-    --gradient-sent: linear-gradient(135deg, hsl(335 85% 62%), hsl(20 95% 62%));
-    --shadow-soft: 0 12px 40px -16px hsl(240 30% 40% / 0.18);
-    --shadow-card: 0 4px 20px -8px hsl(240 30% 40% / 0.12);
+    --shadow-soft: 0 6px 24px -10px hsl(200 10% 20% / 0.18);
+    --shadow-card: 0 1px 2px hsl(200 10% 20% / 0.13);
+    --shadow-bubble: 0 1px 0.5px hsl(200 10% 20% / 0.13);
   }
 
   .dark {
-    --background: 240 25% 10%;
-    --foreground: 0 0% 98%;
-    --card: 240 22% 14%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 22% 14%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 335 85% 62%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 18% 20%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 18% 20%;
-    --muted-foreground: 240 10% 70%;
-    --accent: 20 95% 62%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 80% 58%;
+    --background: 200 6% 7%;
+    --foreground: 0 0% 95%;
+    --card: 200 6% 11%;
+    --card-foreground: 0 0% 95%;
+    --popover: 200 6% 11%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 168 76% 42%;
+    --primary-foreground: 200 10% 8%;
+    --secondary: 200 6% 16%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 200 6% 16%;
+    --muted-foreground: 200 5% 65%;
+    --accent: 168 76% 42%;
+    --accent-foreground: 200 10% 8%;
+    --destructive: 4 76% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 18% 22%;
-    --input: 240 18% 20%;
-    --ring: 335 85% 62%;
-    --telegraph-bg: 240 22% 14%;
-    --telegraph-card: 240 18% 18%;
-    --telegraph-border: 240 18% 24%;
-    --telegraph-text: 0 0% 98%;
-    --telegraph-muted: 240 10% 65%;
+    --border: 200 6% 18%;
+    --input: 200 6% 16%;
+    --ring: 168 76% 42%;
+
+    --wa-header: 200 6% 13%;
+    --wa-header-foreground: 0 0% 95%;
+    --wa-rail: 200 6% 11%;
+    --wa-chat-bg: 200 8% 8%;
+    --wa-bubble-out: 169 35% 22%;       /* #005c4b-ish */
+    --wa-bubble-in: 200 6% 14%;
+    --wa-list-active: 200 6% 16%;
+    --wa-list-hover: 200 6% 14%;
+    --wa-divider: 200 6% 20%;
   }
 }
 
@@ -90,19 +90,51 @@
   html, body, #root { height: 100%; }
   body {
     color: hsl(var(--foreground));
-    background: var(--gradient-app);
-    background-attachment: fixed;
+    background: hsl(var(--background));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   }
-  ::selection { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  ::selection { background-color: hsl(var(--primary) / 0.4); color: hsl(var(--foreground)); }
 }
 
 @layer utilities {
-  .bg-gradient-rail { background: var(--gradient-rail); }
-  .bg-gradient-sent { background: var(--gradient-sent); }
+  .bg-wa-header { background-color: hsl(var(--wa-header)); color: hsl(var(--wa-header-foreground)); }
+  .bg-wa-rail { background-color: hsl(var(--wa-rail)); color: hsl(var(--wa-header-foreground)); }
+  .bg-wa-chat {
+    background-color: hsl(var(--wa-chat-bg));
+    background-image:
+      radial-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+      radial-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+    background-size: 22px 22px, 14px 14px;
+    background-position: 0 0, 11px 11px;
+  }
+  .bg-wa-bubble-out { background-color: hsl(var(--wa-bubble-out)); }
+  .bg-wa-bubble-in { background-color: hsl(var(--wa-bubble-in)); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-bubble { box-shadow: var(--shadow-bubble); }
   .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 0.5rem); }
+
+  /* WhatsApp-style bubble tails */
+  .wa-tail-out::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -7px;
+    width: 12px;
+    height: 13px;
+    background-color: hsl(var(--wa-bubble-out));
+    clip-path: polygon(0 0, 0 100%, 100% 0);
+  }
+  .wa-tail-in::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -7px;
+    width: 12px;
+    height: 13px;
+    background-color: hsl(var(--wa-bubble-in));
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+  }
 }

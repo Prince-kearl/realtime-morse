@@ -241,7 +241,7 @@ export function MessageComposer({ selection, onChangeInput, onSend }: Props) {
   const Icon = ICONS[selection.source];
 
   return (
-    <div className="rounded-3xl bg-white border border-border p-3 space-y-2 shadow-card">
+    <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
         <button
           onClick={onChangeInput}
@@ -262,20 +262,20 @@ export function MessageComposer({ selection, onChangeInput, onSend }: Props) {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Type your message…"
-            className="flex-1 h-12 rounded-full bg-secondary border-0 px-5 text-[15px]"
+            placeholder="Type a message"
+            className="flex-1 h-11 rounded-full bg-card border-0 px-5 text-[15px] shadow-bubble"
           />
           <Button
             onClick={handleSend}
             disabled={!text.trim()}
-            className="h-12 w-12 rounded-full bg-gradient-sent text-white hover:opacity-90 shadow-card p-0"
+            className="h-11 w-11 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-card p-0 shrink-0"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
       ) : (
         <>
-          <div className="rounded-2xl bg-secondary p-3 min-h-[48px] flex items-center justify-between gap-2">
+          <div className="rounded-2xl bg-card p-3 min-h-[48px] flex items-center justify-between gap-2 shadow-bubble">
             <div className="flex-1 font-mono text-sm break-all">
               {morseBuffer}
               {currentLetter && <span className="text-primary ml-1">{currentLetter}</span>}
@@ -292,30 +292,31 @@ export function MessageComposer({ selection, onChangeInput, onSend }: Props) {
             )}
           </div>
 
-          {selection.source === 'telegraph' && (
-            <button
-              onMouseDown={handlePressStart}
-              onMouseUp={handlePressEnd}
-              onMouseLeave={() => pressing && handlePressEnd()}
-              onTouchStart={(e) => { e.preventDefault(); handlePressStart(); }}
-              onTouchEnd={(e) => { e.preventDefault(); handlePressEnd(); }}
-              className={`w-full h-14 rounded-2xl font-bold uppercase tracking-widest text-sm transition-all select-none ${
-                pressing
-                  ? 'bg-gradient-sent text-white shadow-soft scale-[0.99]'
-                  : 'bg-secondary text-primary hover:bg-secondary/70'
-              }`}
+          <div className="flex items-center gap-2">
+            {selection.source === 'telegraph' && (
+              <button
+                onMouseDown={handlePressStart}
+                onMouseUp={handlePressEnd}
+                onMouseLeave={() => pressing && handlePressEnd()}
+                onTouchStart={(e) => { e.preventDefault(); handlePressStart(); }}
+                onTouchEnd={(e) => { e.preventDefault(); handlePressEnd(); }}
+                className={`flex-1 h-11 rounded-full font-bold uppercase tracking-widest text-xs transition-all select-none ${
+                  pressing
+                    ? 'bg-primary text-primary-foreground shadow-soft scale-[0.99]'
+                    : 'bg-card text-primary hover:bg-card/80 shadow-bubble'
+                }`}
+              >
+                {pressing ? '● Sending' : 'Tap / Hold to Key'}
+              </button>
+            )}
+            <Button
+              onClick={handleSend}
+              disabled={!morseBuffer && !currentLetter}
+              className="h-11 w-11 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-card p-0 shrink-0"
             >
-              {pressing ? '● Sending' : 'Tap / Hold to Key'}
-            </button>
-          )}
-
-          <Button
-            onClick={handleSend}
-            disabled={!morseBuffer && !currentLetter}
-            className="w-full h-12 rounded-full bg-gradient-sent text-white hover:opacity-90 shadow-card"
-          >
-            <Send className="h-4 w-4 mr-2" /> Send
-          </Button>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </>
       )}
     </div>

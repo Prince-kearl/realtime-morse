@@ -13,25 +13,29 @@ import {
   History,
   BarChart3,
   MoreHorizontal,
+  Phone,
 } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { path: '/chat', label: 'Chat', icon: MessageSquare },
-  { path: '/translator', label: 'Translator', icon: Zap },
+const railTop = [
+  { path: '/chat', label: 'Chats', icon: MessageSquare },
+  { path: '/translator', label: 'Translate', icon: Zap },
   { path: '/tools', label: 'Tools', icon: BarChart3 },
-  { path: '/learn', label: 'Learn', icon: BookOpen },
   { path: '/history', label: 'History', icon: History },
   { path: '/reference', label: 'Reference', icon: Radio },
+  { path: '/learn', label: 'Learn', icon: BookOpen },
+];
+
+const railBottom = [
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 const mobileNav = [
-  { path: '/chat', icon: MessageSquare, label: 'Chat' },
+  { path: '/chat', icon: MessageSquare, label: 'Chats' },
   { path: '/translator', icon: Zap, label: 'Translate' },
   { path: '/tools', icon: BarChart3, label: 'Tools' },
 ];
@@ -57,60 +61,47 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const moreActive = mobileMoreItems.some((i) => i.path === location.pathname);
 
+  const RailButton = ({ path, label, icon: Icon }: { path: string; label: string; icon: typeof MessageSquare }) => {
+    const active = location.pathname === path;
+    return (
+      <button
+        onClick={() => navigate(path)}
+        title={label}
+        className={`group relative grid h-11 w-11 place-items-center rounded-full transition ${
+          active ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+      </button>
+    );
+  };
+
   return (
-    <div className="min-h-screen flex">
-      {/* Gradient rail — desktop only */}
-      <aside className="hidden md:flex w-20 lg:w-24 shrink-0 flex-col items-center gap-2 bg-gradient-rail py-6 text-white shadow-soft">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/20 backdrop-blur-md mb-4">
-          <Radio className="h-6 w-6" />
+    <div className="min-h-screen flex bg-background">
+      {/* WhatsApp-style icon rail — desktop only */}
+      <aside className="hidden md:flex w-16 shrink-0 flex-col items-center justify-between py-4 bg-wa-rail border-r border-black/20">
+        <div className="flex flex-col items-center gap-2">
+          {railTop.map((item) => <RailButton key={item.path} {...item} />)}
         </div>
-        <nav className="flex flex-col gap-1 flex-1 w-full px-3">
-          {navItems.map(({ path, label, icon: Icon }) => {
-            const active = location.pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                title={label}
-                className={`group flex flex-col items-center gap-1 rounded-2xl py-3 transition ${
-                  active ? 'bg-white/25 backdrop-blur-md' : 'hover:bg-white/15'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium opacity-90">{label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <button
-          onClick={handleSignOut}
-          title="Sign out"
-          className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15 hover:bg-white/25 transition"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          {railBottom.map((item) => <RailButton key={item.path} {...item} />)}
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            className="grid h-11 w-11 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
+        </div>
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between px-4 h-14 bg-gradient-rail text-white shadow-soft">
-        <div className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/25">
-            <Radio className="h-4 w-4" />
-          </div>
-          <span className="font-semibold tracking-wide">Telegraph</span>
-        </div>
-        <button onClick={handleSignOut} className="grid h-9 w-9 place-items-center rounded-xl bg-white/20">
-          <LogOut className="h-4 w-4" />
-        </button>
-      </header>
-
       {/* Main */}
-      <main className="flex-1 min-w-0 flex flex-col pt-14 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 flex flex-col pb-16 md:pb-0">
         {children}
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-border safe-bottom">
+      {/* Mobile bottom nav (WhatsApp tabs) */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border safe-bottom">
         <div className="grid grid-cols-4">
           {mobileNav.map(({ path, icon: Icon, label }) => {
             const active = location.pathname === path;
@@ -118,13 +109,11 @@ export function MainLayout({ children }: MainLayoutProps) {
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
+                className={`flex flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
                   active ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                <div className={`grid h-9 w-9 place-items-center rounded-xl ${active ? 'bg-gradient-sent text-white' : ''}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
+                <Icon className="h-5 w-5" />
                 <span>{label}</span>
               </button>
             );
@@ -133,17 +122,15 @@ export function MainLayout({ children }: MainLayoutProps) {
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger asChild>
               <button
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
+                className={`flex flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
                   moreActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                <div className={`grid h-9 w-9 place-items-center rounded-xl ${moreActive ? 'bg-gradient-sent text-white' : ''}`}>
-                  <MoreHorizontal className="h-4 w-4" />
-                </div>
+                <MoreHorizontal className="h-5 w-5" />
                 <span>More</span>
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-3xl">
+            <SheetContent side="bottom" className="rounded-t-2xl">
               <SheetHeader>
                 <SheetTitle>More</SheetTitle>
               </SheetHeader>
@@ -157,8 +144,8 @@ export function MainLayout({ children }: MainLayoutProps) {
                         navigate(path);
                         setMoreOpen(false);
                       }}
-                      className={`flex flex-col items-center gap-2 rounded-2xl p-4 transition ${
-                        active ? 'bg-gradient-sent text-white' : 'bg-secondary hover:bg-secondary/70'
+                      className={`flex flex-col items-center gap-2 rounded-xl p-4 transition ${
+                        active ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/70'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -166,6 +153,13 @@ export function MainLayout({ children }: MainLayoutProps) {
                     </button>
                   );
                 })}
+                <button
+                  onClick={async () => { setMoreOpen(false); await handleSignOut(); }}
+                  className="flex flex-col items-center gap-2 rounded-xl p-4 bg-secondary hover:bg-secondary/70 transition"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-xs font-medium">Sign out</span>
+                </button>
               </div>
             </SheetContent>
           </Sheet>
